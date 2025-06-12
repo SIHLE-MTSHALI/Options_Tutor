@@ -21,12 +21,17 @@
   "homepage": "https://github.com/SIHLE-MTSHALI/Options_Tutor#readme",
   "description": "",
   "dependencies": {
+    "@reduxjs/toolkit": "^2.8.2",
     "@types/react": "^19.1.8",
     "@types/react-dom": "^19.1.6",
+    "d3": "^7.9.0",
     "electron": "^36.4.0",
     "electron-builder": "^26.0.12",
     "react": "^19.1.0",
+    "react-d3-library": "^1.1.8",
     "react-dom": "^19.1.0",
+    "react-redux": "^9.2.0",
+    "redux": "^5.0.1",
     "sass": "^1.89.2",
     "typescript": "^5.8.3"
   },

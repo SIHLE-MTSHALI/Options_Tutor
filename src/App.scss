@@ -1,27 +1,91 @@
+@import './styles/variables';
+
+body {
+  margin: 0;
+  padding: 0;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background-color: $dark-bg;
+  color: $light-text;
+}
+
 .app-layout {
-  display: grid;
-  grid-template-columns: 1fr 2fr 1fr;
+  display: flex;
   height: 100vh;
-  gap: 1rem;
-  padding: 1rem;
+  background-color: $dark-bg;
+}
 
-  .left-pane, .center-pane, .right-pane {
-    background-color: #172a45; /* Light navy */
-    border-radius: 8px;
-    padding: 1rem;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-    overflow: auto;
+.left-pane {
+  width: 25%;
+  border-right: 1px solid $border-color;
+  padding: 15px;
+  overflow-y: auto;
+  background-color: $panel-bg;
+}
+
+.center-pane {
+  width: 50%;
+  display: flex;
+  flex-direction: column;
+  padding: 15px;
+  background-color: $dark-bg;
+}
+
+.right-pane {
+  width: 25%;
+  border-left: 1px solid $border-color;
+  padding: 15px;
+  overflow-y: auto;
+  background-color: $panel-bg;
+}
+
+/* Global styles */
+.positive {
+  color: $positive-color;
+}
+
+.negative {
+  color: $negative-color;
+}
+
+.warning {
+  color: $warning-color;
+}
+
+.critical {
+  color: $critical-color;
+}
+
+button {
+  background-color: $primary-color;
+  color: white;
+  border: none;
+  padding: 8px 15px;
+  border-radius: 4px;
+  cursor: pointer;
+  margin: 5px;
+  transition: background-color 0.3s;
+
+  &:hover {
+    background-color: darken($primary-color, 10%);
   }
 
-  .left-pane {
-    grid-column: 1;
+  &:disabled {
+    background-color: $disabled-color;
+    cursor: not-allowed;
   }
+}
 
-  .center-pane {
-    grid-column: 2;
-  }
+input, select {
+  padding: 8px;
+  border: 1px solid $border-color;
+  border-radius: 4px;
+  background-color: $input-bg;
+  color: $light-text;
+  margin: 5px 0;
+}
 
-  .right-pane {
-    grid-column: 3;
-  }
+label {
+  display: flex;
+  flex-direction: column;
+  margin: 10px 0;
 }
