@@ -1,0 +1,47 @@
+{
+  "name": "options_tutor",
+  "version": "1.0.0",
+  "main": "main.js",
+  "scripts": {
+    "build:main": "webpack --config webpack.main.config.js",
+    "build:renderer": "webpack --config webpack.renderer.config.js",
+    "build": "npm run build:main && npm run build:renderer",
+    "start": "electron ."
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/SIHLE-MTSHALI/Options_Tutor.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/SIHLE-MTSHALI/Options_Tutor/issues"
+  },
+  "homepage": "https://github.com/SIHLE-MTSHALI/Options_Tutor#readme",
+  "description": "",
+  "dependencies": {
+    "@types/react": "^19.1.8",
+    "@types/react-dom": "^19.1.6",
+    "electron": "^36.4.0",
+    "electron-builder": "^26.0.12",
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0",
+    "sass": "^1.89.2",
+    "typescript": "^5.8.3"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.27.4",
+    "@babel/preset-env": "^7.27.2",
+    "babel-loader": "^10.0.0",
+    "css-loader": "^7.1.2",
+    "electron-reload": "^2.0.0-alpha.1",
+    "html-webpack-plugin": "^5.6.3",
+    "sass-loader": "^16.0.5",
+    "style-loader": "^4.0.0",
+    "ts-loader": "^9.5.2",
+    "webpack": "^5.99.9",
+    "webpack-cli": "^6.0.1",
+    "webpack-node-externals": "^3.0.0"
+  }
+}

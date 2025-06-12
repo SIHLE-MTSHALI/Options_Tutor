@@ -1,0 +1,20 @@
+# Dependencies
+node_modules/
+
+# Build artifacts
+dist/
+.DS_Store
+
+# Environment variables
+.env
+
+# Logs
+logs/
+*.log
+
+# Editor/IDE
+.vscode/
+.idea/
+
+# MemLog tracking files
+memlog/*.log

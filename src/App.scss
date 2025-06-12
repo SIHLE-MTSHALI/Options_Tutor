@@ -1,0 +1,27 @@
+.app-layout {
+  display: grid;
+  grid-template-columns: 1fr 2fr 1fr;
+  height: 100vh;
+  gap: 1rem;
+  padding: 1rem;
+
+  .left-pane, .center-pane, .right-pane {
+    background-color: #172a45; /* Light navy */
+    border-radius: 8px;
+    padding: 1rem;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    overflow: auto;
+  }
+
+  .left-pane {
+    grid-column: 1;
+  }
+
+  .center-pane {
+    grid-column: 2;
+  }
+
+  .right-pane {
+    grid-column: 3;
+  }
+}
