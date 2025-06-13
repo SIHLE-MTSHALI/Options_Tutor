@@ -1,8 +1,10 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 
-interface OptionLeg {
+export interface OptionLeg {
   id: string;
-  type: 'call' | 'put';
+  optionType: 'call' | 'put';
+  symbol: string;
+  contractId: string;
   action: 'buy' | 'sell';
   strike: number;
   expiry: string;
@@ -25,6 +27,7 @@ interface TradingState {
   legs: OptionLeg[];
   showPayoffDiagram: boolean;
   showRiskGraph: boolean;
+  tradeError: string | null;
 }
 
 const initialState: TradingState = {
@@ -32,6 +35,7 @@ const initialState: TradingState = {
   legs: [],
   showPayoffDiagram: true,
   showRiskGraph: false,
+  tradeError: null,
 };
 
 export const tradingSlice = createSlice({
@@ -60,13 +64,27 @@ export const tradingSlice = createSlice({
     toggleRiskGraph: (state) => {
       state.showRiskGraph = !state.showRiskGraph;
     },
-    executeTrade: (state) => {
-      // Trade execution logic will be handled by middleware
+    executeTrade: (state, action: PayloadAction<{ legs: OptionLeg[]; marginUsed: number }>) => {
+      // Trade execution handled by thunk - just reset state
       state.legs = [];
       state.selectedStrategy = null;
+      state.tradeError = null;
+    },
+    setTradeError: (state, action: PayloadAction<string>) => {
+      state.tradeError = action.payload;
     }
   },
 });
 
-export const { addLeg, removeLeg, updateLeg, selectStrategy, togglePayoffDiagram, toggleRiskGraph, executeTrade } = tradingSlice.actions;
+export const {
+  addLeg,
+  removeLeg,
+  updateLeg,
+  selectStrategy,
+  togglePayoffDiagram,
+  toggleRiskGraph,
+  executeTrade,
+  setTradeError
+} = tradingSlice.actions;
+
 export default tradingSlice.reducer;

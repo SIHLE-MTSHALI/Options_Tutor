@@ -1,6 +1,17 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 
-interface OptionChain {
+export interface OptionData {
+  expiry: string;
+  strike: number;
+  lastPrice: number;
+  bid: number;
+  ask: number;
+  volume: number;
+  openInterest: number;
+  impliedVol: number;
+}
+
+export interface OptionChain {
   [strike: string]: {
     calls: OptionData[];
     puts: OptionData[];

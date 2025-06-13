@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '@redux/store';
-import { addLeg, removeLeg, updateLeg, executeTrade, togglePayoffDiagram, toggleRiskGraph } from '@redux/tradingSlice';
+import { addLeg, removeLeg, updateLeg, togglePayoffDiagram, toggleRiskGraph } from '@redux/tradingSlice';
+import { executeTradeThunk } from '@redux/tradeThunks';
 
 const OrderBuilder: React.FC = () => {
   const dispatch = useDispatch();
@@ -40,7 +41,7 @@ const OrderBuilder: React.FC = () => {
   };
   
   const handleExecuteTrade = () => {
-    dispatch(executeTrade());
+    dispatch(executeTradeThunk(legs));
   };
   
   return (
@@ -51,8 +52,8 @@ const OrderBuilder: React.FC = () => {
         <div className="form-row">
           <label>
             Type:
-            <select 
-              value={newLeg.type} 
+            <select
+              value={newLeg.type}
               onChange={(e) => setNewLeg({...newLeg, type: e.target.value as 'call' | 'put'})}
             >
               <option value="call">Call</option>
@@ -62,8 +63,8 @@ const OrderBuilder: React.FC = () => {
           
           <label>
             Action:
-            <select 
-              value={newLeg.action} 
+            <select
+              value={newLeg.action}
               onChange={(e) => setNewLeg({...newLeg, action: e.target.value as 'buy' | 'sell'})}
             >
               <option value="buy">Buy</option>
@@ -75,9 +76,9 @@ const OrderBuilder: React.FC = () => {
         <div className="form-row">
           <label>
             Strike:
-            <input 
-              type="number" 
-              value={newLeg.strike} 
+            <input
+              type="number"
+              value={newLeg.strike}
               onChange={(e) => setNewLeg({...newLeg, strike: parseFloat(e.target.value)})}
               min="0"
               step="0.5"
@@ -86,9 +87,9 @@ const OrderBuilder: React.FC = () => {
           
           <label>
             Expiry:
-            <input 
-              type="date" 
-              value={newLeg.expiry} 
+            <input
+              type="date"
+              value={newLeg.expiry}
               onChange={(e) => setNewLeg({...newLeg, expiry: e.target.value})}
             />
           </label>
@@ -97,9 +98,9 @@ const OrderBuilder: React.FC = () => {
         <div className="form-row">
           <label>
             Quantity:
-            <input 
-              type="number" 
-              value={newLeg.quantity} 
+            <input
+              type="number"
+              value={newLeg.quantity}
               onChange={(e) => setNewLeg({...newLeg, quantity: parseInt(e.target.value)})}
               min="1"
             />
@@ -107,9 +108,9 @@ const OrderBuilder: React.FC = () => {
           
           <label>
             Premium:
-            <input 
-              type="number" 
-              value={newLeg.premium} 
+            <input
+              type="number"
+              value={newLeg.premium}
               onChange={(e) => setNewLeg({...newLeg, premium: parseFloat(e.target.value)})}
               min="0"
               step="0.01"
@@ -145,17 +146,17 @@ const OrderBuilder: React.FC = () => {
       
       <div className="visualization-controls">
         <label>
-          <input 
-            type="checkbox" 
-            checked={showPayoffDiagram} 
+          <input
+            type="checkbox"
+            checked={showPayoffDiagram}
             onChange={() => dispatch(togglePayoffDiagram())}
           />
           Show Payoff Diagram
         </label>
         <label>
-          <input 
-            type="checkbox" 
-            checked={showRiskGraph} 
+          <input
+            type="checkbox"
+            checked={showRiskGraph}
             onChange={() => dispatch(toggleRiskGraph())}
           />
           Show Risk Graph
