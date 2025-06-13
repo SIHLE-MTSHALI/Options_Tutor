@@ -1,13 +1,15 @@
 ## June 13, 2025
 
 ### Completed
-- Implemented HistoricalDataService with:
-  - Caching layer for option chain data
-  - Normalization of API responses
-  - Redux store integration
-  - Error handling
+- Implemented Trade Middleware:
+  - Added position tracking to portfolioSlice
+  - Created trade execution logic
+  - Implemented position P&L calculation
+- Added position-level P&L display to PortfolioSummary
+- Created test script for trade execution validation
+- Fixed TypeScript errors and module resolution issues
 
 ### Next Steps
-- Create mock API service for development/testing
-- Implement trade execution middleware
-- Build payoff calculation engine
+- Implement margin requirements calculation
+- Add position management UI controls
+- Integrate real-time market data with positions

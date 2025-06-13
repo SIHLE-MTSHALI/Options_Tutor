@@ -1,4 +1,5 @@
-import { createSlice, PayloadAction } from '@reduxjs/toolkit';
+import { createSlice, PayloadAction, createAsyncThunk } from '@reduxjs/toolkit';
+import { RootState } from './store';
 
 export interface OptionLeg {
   id: string;
@@ -86,5 +87,23 @@ export const {
   executeTrade,
   setTradeError
 } = tradingSlice.actions;
+
+// Thunk to execute trade
+export const executeTradeThunk = createAsyncThunk(
+  'trading/executeTrade',
+  async (legs: OptionLeg[], { dispatch, getState }) => {
+    // Get current state
+    const state = getState() as RootState;
+    
+    // Simulate trade execution
+    return new Promise<OptionLeg[]>((resolve) => {
+      setTimeout(() => {
+        // Dispatch the executeTrade action to clear the trade builder
+        dispatch(executeTrade({ legs, marginUsed: 0 }));
+        resolve(legs);
+      }, 1000);
+    });
+  }
+);
 
 export default tradingSlice.reducer;

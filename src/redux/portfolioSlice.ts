@@ -1,6 +1,8 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
+import { OptionLeg } from './tradingSlice';
+import { executeTradeThunk } from './tradingSlice';
 
-interface Position {
+export interface Position {
   id: string;
   symbol: string;
   type: 'call' | 'put' | 'stock';
@@ -56,6 +58,63 @@ export const portfolioSlice = createSlice({
       state.unrealizedPL = action.payload;
     }
   },
+  extraReducers: (builder) => {
+    builder.addCase(executeTradeThunk.fulfilled, (state, action: PayloadAction<OptionLeg[]>) => {
+      const legs = action.payload;
+      
+      legs.forEach(leg => {
+        const positionId = `${leg.symbol}-${leg.contractId}`;
+        const existingPosition = state.positions.find(p => p.id === positionId);
+        
+        const cost = leg.quantity * leg.premium;
+        const multiplier = leg.action === 'buy' ? -1 : 1;
+        
+        // Update cash balance (buy reduces cash, sell increases)
+        state.cashBalance += cost * multiplier;
+        
+        if (existingPosition) {
+          // Update existing position
+          const newQuantity = existingPosition.quantity +
+            (leg.action === 'buy' ? leg.quantity : -leg.quantity);
+          
+          if (newQuantity === 0) {
+            // Remove position if quantity becomes zero
+            state.positions = state.positions.filter(p => p.id !== positionId);
+          } else {
+            // Update average cost for position
+            const totalCost = existingPosition.purchasePrice * existingPosition.quantity;
+            existingPosition.purchasePrice =
+              (totalCost + cost) / (existingPosition.quantity + leg.quantity);
+            existingPosition.quantity = newQuantity;
+          }
+        } else if (leg.action === 'buy') {
+          // Add new long position
+          state.positions.push({
+            id: positionId,
+            symbol: leg.symbol,
+            type: leg.optionType,
+            quantity: leg.quantity,
+            strike: leg.strike,
+            expiry: leg.expiry,
+            purchasePrice: leg.premium,
+            currentPrice: leg.premium,
+          });
+        } else {
+          // Add new short position
+          state.positions.push({
+            id: positionId,
+            symbol: leg.symbol,
+            type: leg.optionType,
+            quantity: -leg.quantity,
+            strike: leg.strike,
+            expiry: leg.expiry,
+            purchasePrice: leg.premium,
+            currentPrice: leg.premium,
+          });
+        }
+      });
+    });
+  }
 });
 
 export const { addPosition, updatePosition, closePosition, updateMarginUsage, updateUnrealizedPL } = portfolioSlice.actions;

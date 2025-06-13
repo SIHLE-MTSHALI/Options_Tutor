@@ -5,13 +5,13 @@
   - Fetch and normalize historical options chains
   - Integrate with marketDataSlice
   - Add caching layer
-- [ ] Trade Middleware (2 days)
-  - Validate trades
-  - Calculate margin requirements
-  - Update portfolio state
-- [ ] Payoff Calculations (2 days)
-  - Implement basic payoff formulas
-  - Visualize in OrderBuilder
+- [x] Trade Middleware (2 days)
+  - [x] Validate trades
+  - [ ] Calculate margin requirements
+  - [x] Update portfolio state
+- [x] Payoff Calculations (2 days)
+  - [x] Implement basic payoff formulas
+  - [x] Visualize in PortfolioSummary
 - [ ] MemLog Integration (1 day)
   - Track daily progress
   - Log key decisions

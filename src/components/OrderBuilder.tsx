@@ -3,13 +3,15 @@ import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '@redux/store';
 import { addLeg, removeLeg, updateLeg, togglePayoffDiagram, toggleRiskGraph } from '@redux/tradingSlice';
 import { executeTradeThunk } from '@redux/tradeThunks';
+import { AppDispatch } from '@redux/store';
 
 const OrderBuilder: React.FC = () => {
-  const dispatch = useDispatch();
+  const dispatch = useDispatch<AppDispatch>();
   const { legs, showPayoffDiagram, showRiskGraph } = useSelector((state: RootState) => state.trading);
   
   const [newLeg, setNewLeg] = useState({
-    type: 'call' as 'call' | 'put',
+    symbol: 'AAPL',
+    optionType: 'call' as 'call' | 'put',
     action: 'buy' as 'buy' | 'sell',
     strike: 100,
     expiry: '',
@@ -17,14 +19,28 @@ const OrderBuilder: React.FC = () => {
     premium: 0.5
   });
   
+  const generateContractId = (symbol: string, optionType: string, strike: number, expiry: string) => {
+    return `${symbol}-${optionType.charAt(0).toUpperCase()}${strike}-${expiry.replace(/-/g, '')}`;
+  };
+  
   const handleAddLeg = () => {
+    const contractId = generateContractId(
+      newLeg.symbol,
+      newLeg.optionType,
+      newLeg.strike,
+      newLeg.expiry
+    );
+    
     dispatch(addLeg({
       ...newLeg,
+      contractId,
       id: `leg-${Date.now()}`
     }));
+    
     // Reset form
     setNewLeg({
-      type: 'call',
+      symbol: 'AAPL',
+      optionType: 'call',
       action: 'buy',
       strike: 100,
       expiry: '',
@@ -51,16 +67,27 @@ const OrderBuilder: React.FC = () => {
       <div className="leg-form">
         <div className="form-row">
           <label>
+            Symbol:
+            <input
+              type="text"
+              value={newLeg.symbol}
+              onChange={(e) => setNewLeg({...newLeg, symbol: e.target.value.toUpperCase()})}
+            />
+          </label>
+          
+          <label>
             Type:
             <select
-              value={newLeg.type}
-              onChange={(e) => setNewLeg({...newLeg, type: e.target.value as 'call' | 'put'})}
+              value={newLeg.optionType}
+              onChange={(e) => setNewLeg({...newLeg, optionType: e.target.value as 'call' | 'put'})}
             >
               <option value="call">Call</option>
               <option value="put">Put</option>
             </select>
           </label>
-          
+        </div>
+        
+        <div className="form-row">
           <label>
             Action:
             <select
@@ -71,9 +98,7 @@ const OrderBuilder: React.FC = () => {
               <option value="sell">Sell</option>
             </select>
           </label>
-        </div>
-        
-        <div className="form-row">
+          
           <label>
             Strike:
             <input
@@ -84,7 +109,9 @@ const OrderBuilder: React.FC = () => {
               step="0.5"
             />
           </label>
-          
+        </div>
+        
+        <div className="form-row">
           <label>
             Expiry:
             <input
@@ -93,9 +120,7 @@ const OrderBuilder: React.FC = () => {
               onChange={(e) => setNewLeg({...newLeg, expiry: e.target.value})}
             />
           </label>
-        </div>
-        
-        <div className="form-row">
+          
           <label>
             Quantity:
             <input
@@ -105,7 +130,9 @@ const OrderBuilder: React.FC = () => {
               min="1"
             />
           </label>
-          
+        </div>
+        
+        <div className="form-row">
           <label>
             Premium:
             <input
@@ -130,10 +157,11 @@ const OrderBuilder: React.FC = () => {
             {legs.map(leg => (
               <li key={leg.id} className="leg-item">
                 <div className="leg-info">
-                  <span>{leg.action.toUpperCase()} {leg.quantity} {leg.type.toUpperCase()}</span>
+                  <span>{leg.symbol} {leg.action.toUpperCase()} {leg.quantity} {leg.optionType.toUpperCase()}</span>
                   <span>Strike: ${leg.strike}</span>
                   <span>Exp: {leg.expiry}</span>
                   <span>Premium: ${leg.premium}</span>
+                  <span>Contract: {leg.contractId}</span>
                 </div>
                 <div className="leg-actions">
                   <button onClick={() => dispatch(removeLeg(leg.id))}>Remove</button>
