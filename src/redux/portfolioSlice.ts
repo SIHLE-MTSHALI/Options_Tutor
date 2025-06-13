@@ -11,6 +11,8 @@ export interface Position {
   expiry?: string;
   purchasePrice: number;
   currentPrice: number;
+  stopLoss?: number;
+  takeProfit?: number;
 }
 
 interface PortfolioState {
@@ -40,6 +42,17 @@ export const portfolioSlice = createSlice({
       const index = state.positions.findIndex(p => p.id === action.payload.id);
       if (index !== -1) {
         state.positions[index] = action.payload;
+      }
+    },
+    modifyPosition: (state, action: PayloadAction<{ id: string; stopLoss?: number; takeProfit?: number }>) => {
+      const position = state.positions.find(p => p.id === action.payload.id);
+      if (position) {
+        if (action.payload.stopLoss !== undefined) {
+          position.stopLoss = action.payload.stopLoss;
+        }
+        if (action.payload.takeProfit !== undefined) {
+          position.takeProfit = action.payload.takeProfit;
+        }
       }
     },
     closePosition: (state, action: PayloadAction<{id: string, closePrice: number}>) => {
@@ -117,5 +130,5 @@ export const portfolioSlice = createSlice({
   }
 });
 
-export const { addPosition, updatePosition, closePosition, updateMarginUsage, updateUnrealizedPL } = portfolioSlice.actions;
+export const { addPosition, updatePosition, modifyPosition, closePosition, updateMarginUsage, updateUnrealizedPL } = portfolioSlice.actions;
 export default portfolioSlice.reducer;

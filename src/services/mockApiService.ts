@@ -56,4 +56,12 @@ export class MockApiService {
       }, 300); // Simulate network delay
     });
   }
+
+  public async fetchStockQuote(symbol: string): Promise<{ price: number }> {
+    return new Promise(resolve => {
+      setTimeout(() => {
+        resolve({ price: 150 + (Math.random() * 100) }); // Mock price between 150-250
+      }, 200);
+    });
+  }
 }

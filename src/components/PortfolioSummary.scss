@@ -1,0 +1,59 @@
+@import '../styles/variables';
+
+.portfolio-summary {
+  padding: $spacing-md;
+  background-color: $panel-bg;
+  border-radius: 4px;
+  border: 1px solid $border-color;
+  
+  h2, h3 {
+    margin-top: 0;
+    margin-bottom: $spacing-md;
+  }
+  
+  .metrics {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: $spacing-md;
+    margin-bottom: $spacing-lg;
+    
+    .metric {
+      display: flex;
+      justify-content: space-between;
+      padding: $spacing-sm;
+      border-bottom: 1px solid $border-color;
+      
+      .label {
+        font-weight: bold;
+      }
+      
+      .value {
+        &.positive { color: $positive-color; }
+        &.negative { color: $negative-color; }
+        &.warning { color: $warning-color; }
+        &.critical { color: $critical-color; }
+      }
+    }
+  }
+  
+  .positions {
+    .position {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: $spacing-sm 0;
+      border-bottom: 1px solid $border-color;
+      
+      .symbol {
+        font-weight: bold;
+        width: 25%;
+      }
+      
+      .details {
+        display: flex;
+        flex-direction: column;
+        width: 35%;
+      }
+    }
+  }
+}

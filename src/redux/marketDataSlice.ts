@@ -18,17 +18,6 @@ export interface OptionChain {
   };
 }
 
-interface OptionData {
-  expiry: string;
-  strike: number;
-  lastPrice: number;
-  bid: number;
-  ask: number;
-  volume: number;
-  openInterest: number;
-  impliedVol: number;
-}
-
 interface MarketDataState {
   currentPrice: number;
   volatility: number;
@@ -36,6 +25,7 @@ interface MarketDataState {
     [symbol: string]: OptionChain;
   };
   selectedSymbol: string;
+  stockQuotes: Record<string, { price: number }>; // Added stockQuotes
 }
 
 const initialState: MarketDataState = {
@@ -43,6 +33,7 @@ const initialState: MarketDataState = {
   volatility: 0.3,
   optionChains: {},
   selectedSymbol: 'TSLA',
+  stockQuotes: {}, // Initialize as empty object
 };
 
 export const marketDataSlice = createSlice({
@@ -61,9 +52,20 @@ export const marketDataSlice = createSlice({
     },
     selectSymbol: (state, action: PayloadAction<string>) => {
       state.selectedSymbol = action.payload;
+    },
+    updateStockQuote: (state, action: PayloadAction<{symbol: string; price: number}>) => {
+      const { symbol, price } = action.payload;
+      state.stockQuotes[symbol] = { price };
     }
   },
 });
 
-export const { updatePrice, updateVolatility, updateOptionChain, selectSymbol } = marketDataSlice.actions;
+export const {
+  updatePrice,
+  updateVolatility,
+  updateOptionChain,
+  selectSymbol,
+  updateStockQuote // Added new action
+} = marketDataSlice.actions;
+
 export default marketDataSlice.reducer;

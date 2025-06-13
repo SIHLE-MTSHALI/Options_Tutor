@@ -1,9 +1,12 @@
 import { RootState } from '../redux/store';
 import { addPosition } from '../redux/portfolioSlice';
+import { updateStockQuote } from '../redux/marketDataSlice'; // Added
 import { OptionLeg } from '../redux/tradingSlice';
+import { MarginService } from './MarginService';
+import { MockApiService } from './mockApiService'; // Added
 
 export class TradeService {
-  static executeTrade(legs: OptionLeg[], getState: () => RootState, dispatch: any) {
+  static async executeTrade(legs: OptionLeg[], getState: () => RootState, dispatch: any) { // Made async
     const state = getState();
     
     // Validate all legs
@@ -11,8 +14,22 @@ export class TradeService {
       throw new Error('Invalid trade legs');
     }
     
-    // Calculate required margin
-    const margin = legs.reduce((sum, leg) => sum + this.calculateMargin(leg, state), 0);
+    // Get underlying price (assuming all legs for same symbol)
+    const symbol = legs[0].symbol;
+    let underlyingPrice = state.marketData.stockQuotes[symbol]?.price; // Changed to let
+    
+    if (!underlyingPrice) {
+      try {
+        const quote = await MockApiService.getInstance().fetchStockQuote(symbol); // Use singleton
+        underlyingPrice = quote.price;
+        dispatch(updateStockQuote({symbol, price: quote.price})); // Dispatch update
+      } catch (e) {
+        throw new Error(`Failed to fetch stock quote for ${symbol}`);
+      }
+    }
+    
+    // Calculate required margin using MarginService
+    const margin = MarginService.calculateMargin(legs, underlyingPrice);
     
     // Check buying power
     if (margin > state.portfolio.cashBalance) {
@@ -23,7 +40,7 @@ export class TradeService {
     legs.forEach(leg => {
       dispatch(addPosition({
         id: `${leg.id}-${Date.now()}`,
-        symbol: 'TSLA', // Default symbol for now
+        symbol: symbol,
         type: leg.optionType,
         quantity: leg.action === 'buy' ? leg.quantity : -leg.quantity,
         strike: leg.strike,
@@ -48,10 +65,5 @@ export class TradeService {
       const optionsArray = leg.optionType === 'call' ? expiryData.calls : expiryData.puts;
       return !!optionsArray.find(option => option.strike === leg.strike);
     });
-  }
-  
-  private static calculateMargin(leg: OptionLeg, state: RootState): number {
-    // Simple margin calculation (premium * quantity * contract multiplier)
-    return leg.premium * leg.quantity * 100;
   }
 }

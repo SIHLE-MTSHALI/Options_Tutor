@@ -2,6 +2,8 @@ import React from 'react';
 import { useSelector } from 'react-redux';
 import { RootState } from '@redux/store';
 import type { Position } from '../redux/portfolioSlice';
+import PositionControls from './PositionControls';
+import './PortfolioSummary.scss';
 
 const PortfolioSummary: React.FC = () => {
   const portfolio = useSelector((state: RootState) => state.portfolio);
@@ -47,14 +49,7 @@ const PortfolioSummary: React.FC = () => {
                   <span>{position.type} {position.strike ? `@${position.strike}` : ''}</span>
                   <span>Qty: {position.quantity}</span>
                 </div>
-                <div className="prices">
-                  <div className={`price ${position.currentPrice >= position.purchasePrice ? 'positive' : 'negative'}`}>
-                    ${position.currentPrice.toFixed(2)}
-                  </div>
-                  <div className={`pl ${calculatePositionUnrealizedPL(position) >= 0 ? 'positive' : 'negative'}`}>
-                    {calculatePositionUnrealizedPL(position) >= 0 ? '+' : ''}{calculatePositionUnrealizedPL(position).toFixed(2)}
-                  </div>
-                </div>
+                <PositionControls position={position} />
               </li>
             ))}
           </ul>
@@ -62,9 +57,6 @@ const PortfolioSummary: React.FC = () => {
       </div>
     </div>
   );
-  const calculatePositionUnrealizedPL = (position: Position) => {
-    return (position.currentPrice - position.purchasePrice) * position.quantity;
-  };
 };
 
 export default PortfolioSummary;

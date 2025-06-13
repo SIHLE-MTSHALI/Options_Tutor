@@ -4,9 +4,9 @@ import type { AppDispatch, RootState } from './store';
 import type { OptionLeg } from './tradingSlice';
 
 export const executeTradeThunk = (legs: OptionLeg[]) =>
-  (dispatch: AppDispatch, getState: () => RootState) => {
+  async (dispatch: AppDispatch, getState: () => RootState) => { // Added async
     try {
-      const marginUsed = TradeService.executeTrade(legs, getState, dispatch);
+      const marginUsed = await TradeService.executeTrade(legs, getState, dispatch); // Added await
       dispatch(executeTrade({ legs, marginUsed }));
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown trade error';
