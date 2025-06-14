@@ -1,6 +1,7 @@
 import React from 'react';
-import { useDispatch } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { Position } from '../redux/portfolioSlice';
+import type { RootState } from '../redux/store';
 import { modifyPosition } from '../redux/portfolioSlice';
 import '../styles/Dialog.scss';
 
@@ -16,6 +17,7 @@ export const PositionModifyDialog: React.FC<PositionModifyDialogProps> = ({
   const dispatch = useDispatch();
   const [stopLoss, setStopLoss] = React.useState<number | undefined>(position.stopLoss);
   const [takeProfit, setTakeProfit] = React.useState<number | undefined>(position.takeProfit);
+  const isPending = useSelector((state: RootState) => state.portfolio.isPending);
   
   const handleSave = () => {
     dispatch(modifyPosition({
@@ -55,8 +57,8 @@ export const PositionModifyDialog: React.FC<PositionModifyDialogProps> = ({
           <button className="btn-secondary" onClick={onClose}>
             Cancel
           </button>
-          <button className="btn-primary" onClick={handleSave}>
-            Save
+          <button className="btn-primary" onClick={handleSave} disabled={isPending}>
+            {isPending ? 'Saving...' : 'Save'}
           </button>
         </div>
       </div>

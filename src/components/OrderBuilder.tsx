@@ -34,7 +34,8 @@ const OrderBuilder: React.FC = () => {
     dispatch(addLeg({
       ...newLeg,
       contractId,
-      id: `leg-${Date.now()}`
+      id: `leg-${Date.now()}`,
+      type: newLeg.optionType // Added type property
     }));
     
     // Reset form

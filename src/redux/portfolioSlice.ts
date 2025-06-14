@@ -21,6 +21,7 @@ interface PortfolioState {
   unrealizedPL: number;
   realizedPL: number;
   marginUsage: number;
+  isPending: boolean;
 }
 
 const initialState: PortfolioState = {
@@ -29,6 +30,7 @@ const initialState: PortfolioState = {
   unrealizedPL: 0,
   realizedPL: 0,
   marginUsage: 0,
+  isPending: false,
 };
 
 export const portfolioSlice = createSlice({
@@ -45,6 +47,7 @@ export const portfolioSlice = createSlice({
       }
     },
     modifyPosition: (state, action: PayloadAction<{ id: string; stopLoss?: number; takeProfit?: number }>) => {
+      state.isPending = true;
       const position = state.positions.find(p => p.id === action.payload.id);
       if (position) {
         if (action.payload.stopLoss !== undefined) {
@@ -54,8 +57,10 @@ export const portfolioSlice = createSlice({
           position.takeProfit = action.payload.takeProfit;
         }
       }
+      state.isPending = false;
     },
     closePosition: (state, action: PayloadAction<{id: string, closePrice: number}>) => {
+      state.isPending = true;
       const position = state.positions.find(p => p.id === action.payload.id);
       if (position) {
         const profit = (action.payload.closePrice - position.purchasePrice) * position.quantity;
@@ -63,12 +68,16 @@ export const portfolioSlice = createSlice({
         state.cashBalance += profit;
         state.positions = state.positions.filter(p => p.id !== action.payload.id);
       }
+      state.isPending = false;
     },
     updateMarginUsage: (state, action: PayloadAction<number>) => {
       state.marginUsage = action.payload;
     },
     updateUnrealizedPL: (state, action: PayloadAction<number>) => {
       state.unrealizedPL = action.payload;
+    },
+    setPending: (state, action: PayloadAction<boolean>) => {
+      state.isPending = action.payload;
     }
   },
   extraReducers: (builder) => {
@@ -130,5 +139,5 @@ export const portfolioSlice = createSlice({
   }
 });
 
-export const { addPosition, updatePosition, modifyPosition, closePosition, updateMarginUsage, updateUnrealizedPL } = portfolioSlice.actions;
+export const { addPosition, updatePosition, modifyPosition, closePosition, updateMarginUsage, updateUnrealizedPL, setPending } = portfolioSlice.actions;
 export default portfolioSlice.reducer;

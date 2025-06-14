@@ -11,6 +11,7 @@ export interface OptionLeg {
   expiry: string;
   quantity: number;
   premium: number;
+  type: 'call' | 'put'; // Added type property
 }
 
 interface Strategy {
@@ -65,8 +66,7 @@ export const tradingSlice = createSlice({
     toggleRiskGraph: (state) => {
       state.showRiskGraph = !state.showRiskGraph;
     },
-    executeTrade: (state, action: PayloadAction<{ legs: OptionLeg[]; marginUsed: number }>) => {
-      // Trade execution handled by thunk - just reset state
+    executeTrade: (state, action: PayloadAction<{ legs: OptionLeg[]; marginUsed: number; status: string }>) => {
       state.legs = [];
       state.selectedStrategy = null;
       state.tradeError = null;
@@ -88,18 +88,14 @@ export const {
   setTradeError
 } = tradingSlice.actions;
 
-// Thunk to execute trade
 export const executeTradeThunk = createAsyncThunk(
   'trading/executeTrade',
   async (legs: OptionLeg[], { dispatch, getState }) => {
-    // Get current state
     const state = getState() as RootState;
     
-    // Simulate trade execution
     return new Promise<OptionLeg[]>((resolve) => {
       setTimeout(() => {
-        // Dispatch the executeTrade action to clear the trade builder
-        dispatch(executeTrade({ legs, marginUsed: 0 }));
+        dispatch(executeTrade({ legs, marginUsed: 0, status: 'completed' }));
         resolve(legs);
       }, 1000);
     });

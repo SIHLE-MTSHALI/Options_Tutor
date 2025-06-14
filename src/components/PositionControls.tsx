@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { useDispatch } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { Position } from '../redux/portfolioSlice';
+import type { RootState } from '../redux/store';
 import { closePosition } from '../redux/portfolioSlice';
 import { AlphaVantageService } from '../services/AlphaVantageService';
 import { PositionModifyDialog } from './PositionModifyDialog';
@@ -14,8 +15,8 @@ const PositionControls: React.FC<PositionControlsProps> = ({ position }) => {
   const alphaVantageService = AlphaVantageService.getInstance();
   const [currentPrice, setCurrentPrice] = useState(position.currentPrice);
   const [isRefreshing, setIsRefreshing] = useState(false);
-  const [isClosing, setIsClosing] = useState(false);
   const [showDialog, setShowDialog] = useState(false);
+  const isPending = useSelector((state: RootState) => state.portfolio.isPending);
   // Calculate P&L
   const unrealizedPL = (currentPrice - position.purchasePrice) * position.quantity;
 
@@ -35,15 +36,8 @@ const PositionControls: React.FC<PositionControlsProps> = ({ position }) => {
 
 
   const handleClosePosition = () => {
-    setIsClosing(true);
-    try {
-      // Use current price for closing
-      dispatch(closePosition({ id: position.id, closePrice: currentPrice }));
-    } catch (error) {
-      console.error('Failed to close position:', error);
-    } finally {
-      setIsClosing(false);
-    }
+    // Use current price for closing
+    dispatch(closePosition({ id: position.id, closePrice: currentPrice }));
   };
 
   const handleRefreshPrice = async () => {
@@ -94,10 +88,10 @@ const PositionControls: React.FC<PositionControlsProps> = ({ position }) => {
         </button>
         <button
           onClick={handleClosePosition}
-          disabled={isClosing}
+          disabled={isPending}
           className="close-button"
         >
-          {isClosing ? 'Closing...' : 'Close Position'}
+          {isPending ? 'Processing...' : 'Close Position'}
         </button>
       </div>
       

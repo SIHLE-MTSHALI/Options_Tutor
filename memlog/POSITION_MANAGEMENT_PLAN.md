@@ -18,9 +18,9 @@
 | Position modification dialog | Pending | - |
 | Visual feedback for pending operations | Pending | - |
 | Error handling for modifications | Pending | - |
-| Component tests | Pending | - |
-| Integration tests | Pending | - |
-
+| Component tests | Completed | 2025-06-14 |
+| Integration tests | Completed | 2025-06-14 |
+ 
 ## Risk Mitigation
 | Risk | Mitigation Strategy |
 |------|---------------------|
@@ -33,8 +33,8 @@
 - [ ] Implement modify position dialog
 - [ ] Add visual feedback for pending operations
 - [ ] Implement error handling for position modifications
-- [ ] Write component tests
-- [ ] Write integration tests
+- [x] Write component tests
+- [x] Write integration tests
 
 ## 6. Dependencies
 1. Market data API credentials
