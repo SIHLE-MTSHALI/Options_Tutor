@@ -30,6 +30,7 @@ const mockPosition: Position = {
   quantity: 100,
   purchasePrice: 150,
   currentPrice: 155,
+  unrealizedPL: 0,
 };
 
 describe('PositionControls Component', () => {

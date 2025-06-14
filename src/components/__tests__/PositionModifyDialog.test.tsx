@@ -2,7 +2,7 @@ import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import { Provider } from 'react-redux';
-import PositionModifyDialog from '../PositionModifyDialog';
+import { PositionModifyDialog } from '../PositionModifyDialog';
 import { configureStore } from '@reduxjs/toolkit';
 import portfolioReducer from '../../redux/portfolioSlice';
 import * as TradeService from '../../services/TradeService';
@@ -21,6 +21,7 @@ const mockPosition: Position = {
   quantity: 100,
   purchasePrice: 150,
   currentPrice: 155,
+  unrealizedPL: 0,
 };
 
 describe('PositionModifyDialog Component', () => {
@@ -49,7 +50,6 @@ describe('PositionModifyDialog Component', () => {
     render(
       <Provider store={store}>
         <PositionModifyDialog
-          open={true}
           onClose={onClose}
           position={mockPosition}
         />
@@ -65,7 +65,6 @@ describe('PositionModifyDialog Component', () => {
     render(
       <Provider store={store}>
         <PositionModifyDialog
-          open={true}
           onClose={onClose}
           position={mockPosition}
         />
@@ -88,7 +87,6 @@ describe('PositionModifyDialog Component', () => {
     render(
       <Provider store={store}>
         <PositionModifyDialog
-          open={true}
           onClose={onClose}
           position={mockPosition}
         />
@@ -121,7 +119,6 @@ describe('PositionModifyDialog Component', () => {
     render(
       <Provider store={store}>
         <PositionModifyDialog
-          open={true}
           onClose={onClose}
           position={mockPosition}
         />
@@ -144,7 +141,6 @@ describe('PositionModifyDialog Component', () => {
     render(
       <Provider store={store}>
         <PositionModifyDialog
-          open={true}
           onClose={onClose}
           position={mockPosition}
         />
@@ -171,7 +167,6 @@ describe('PositionModifyDialog Component', () => {
     render(
       <Provider store={store}>
         <PositionModifyDialog
-          open={true}
           onClose={onClose}
           position={mockPosition}
         />

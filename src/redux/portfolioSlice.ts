@@ -13,6 +13,7 @@ export interface Position {
   currentPrice: number;
   stopLoss?: number;
   takeProfit?: number;
+  unrealizedPL: number;
 }
 
 interface PortfolioState {
@@ -120,6 +121,7 @@ export const portfolioSlice = createSlice({
             expiry: leg.expiry,
             purchasePrice: leg.premium,
             currentPrice: leg.premium,
+            unrealizedPL: 0
           });
         } else {
           // Add new short position
@@ -132,6 +134,7 @@ export const portfolioSlice = createSlice({
             expiry: leg.expiry,
             purchasePrice: leg.premium,
             currentPrice: leg.premium,
+            unrealizedPL: 0
           });
         }
       });

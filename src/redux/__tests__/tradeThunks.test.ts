@@ -20,6 +20,7 @@ describe('tradeThunks', () => {
     quantity: 100,
     purchasePrice: 150,
     currentPrice: 155,
+    unrealizedPL: 0,
   };
 
   beforeEach(() => {

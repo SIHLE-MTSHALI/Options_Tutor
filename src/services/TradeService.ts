@@ -46,7 +46,8 @@ export class TradeService {
         strike: leg.strike,
         expiry: leg.expiry,
         purchasePrice: leg.premium,
-        currentPrice: leg.premium
+        currentPrice: leg.premium,
+        unrealizedPL: 0
       }));
     });
     

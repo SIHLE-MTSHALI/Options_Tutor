@@ -44,3 +44,10 @@
 - Complete component and integration tests
 - Implement API call frequency monitoring and throttling
 - Finalize real-time P&L display with WebSocket integration
+
+### [2025-06-14]
+- Fixed TypeScript errors in test files and TradeService
+- Added missing 'unrealizedPL' property to Position objects
+- Corrected import syntax in PositionModifyDialog.test.tsx
+- Removed invalid code from PositionControls.test.tsx
+- Updated TradeService to include unrealizedPL in new positions
