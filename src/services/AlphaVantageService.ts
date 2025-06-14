@@ -36,7 +36,8 @@ export class AlphaVantageService {
       if (!response.ok) throw new Error(`API error: ${response.status}`);
       
       const data = await response.json();
-      const price = parseFloat(data['Global Quote']['05. price']);
+      const quote = data['Global Quote'] || data['Realtime Global Securities Quote'] || {};
+      const price = parseFloat(quote['05. price'] || quote['05. latest price'] || 0);
       
       if (isNaN(price)) throw new Error('Invalid price format');
       

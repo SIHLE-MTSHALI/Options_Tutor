@@ -18,7 +18,9 @@ const PositionControls: React.FC<PositionControlsProps> = ({ position }) => {
   const [showDialog, setShowDialog] = useState(false);
   const isPending = useSelector((state: RootState) => state.portfolio.isPending);
   // Calculate P&L
-  const unrealizedPL = (currentPrice - position.purchasePrice) * position.quantity;
+  const unrealizedPL = currentPrice
+    ? (currentPrice - position.purchasePrice) * position.quantity
+    : 0;
 
   // Fetch current price on mount
   useEffect(() => {
@@ -55,7 +57,7 @@ const PositionControls: React.FC<PositionControlsProps> = ({ position }) => {
   return (
     <div className="position-controls">
       <div className="price-display">
-        <span>Current Price: ${currentPrice.toFixed(2)}</span>
+        <span>Current Price: {currentPrice ? `$${currentPrice.toFixed(2)}` : 'Loading...'}</span>
         <button onClick={handleRefreshPrice} disabled={isRefreshing}>
           {isRefreshing ? 'Refreshing...' : 'Refresh'}
         </button>

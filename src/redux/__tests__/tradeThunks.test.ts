@@ -36,6 +36,11 @@ describe('tradeThunks', () => {
           realizedPL: 0,
           marginUsage: 0,
           isPending: false,
+          priceUpdateTimestamp: 0,
+          updatesPerSecond: 0,
+          lastSecondUpdates: 0,
+          maxUpdatesPerSecond: 0,
+          lastUpdateTime: Date.now(),
         }
       }
     });
@@ -63,7 +68,7 @@ describe('tradeThunks', () => {
     await store.dispatch(executeTradeThunk(mockLegs));
 
     const state = store.getState().portfolio;
-    expect(state.positions).toHaveLength(2);
+    expect(state.positions).toHaveLength(2); // Should be 2 positions total (original + new option)
     expect(TradeService.TradeService.executeTrade).toHaveBeenCalled();
   });
 

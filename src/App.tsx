@@ -1,3 +1,5 @@
+// DEBUG: App component rendering
+console.log("[DEBUG] Rendering App component");
 import React from 'react';
 import './App.scss';
 import PortfolioSummary from './components/PortfolioSummary';

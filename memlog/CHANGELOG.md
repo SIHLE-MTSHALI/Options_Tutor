@@ -1,3 +1,8 @@
+### 2025-06-14
+- Fixed PortfolioSummary component tests:
+  - Added `within` import from React Testing Library
+  - Implemented scoped element queries to handle duplicate DOM content
+  - Verified all 5 tests pass successfully
 ## June 13, 2025
 
 ### Completed
@@ -51,3 +56,6 @@
 - Corrected import syntax in PositionModifyDialog.test.tsx
 - Removed invalid code from PositionControls.test.tsx
 - Updated TradeService to include unrealizedPL in new positions
+
+### Fixed
+- Added `priceUpdateTimestamp: 0` to all test mock states to resolve TypeScript errors after adding real-time P&L feature

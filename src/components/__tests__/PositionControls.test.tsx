@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import { Provider } from 'react-redux';
 import PositionControls from '../PositionControls';
@@ -49,6 +49,11 @@ describe('PositionControls Component', () => {
           realizedPL: 0,
           marginUsage: 0,
           isPending: false,
+          priceUpdateTimestamp: 0,
+          updatesPerSecond: 0,
+          lastSecondUpdates: 0,
+          maxUpdatesPerSecond: 0,
+          lastUpdateTime: Date.now(),
         },
       },
     });
@@ -78,7 +83,9 @@ describe('PositionControls Component', () => {
       </Provider>
     );
 
-    fireEvent.click(screen.getByText('Refresh'));
+    await act(async () => {
+      fireEvent.click(screen.getByText('Refresh'));
+    });
     await waitFor(() => {
       expect(screen.getByText('Current Price: $160.00')).toBeInTheDocument();
       expect(screen.getByText('Unrealized P/L: +1000.00')).toBeInTheDocument();
@@ -94,6 +101,11 @@ describe('PositionControls Component', () => {
         portfolio: {
           ...store.getState().portfolio,
           isPending: true,
+          priceUpdateTimestamp: 0,
+          updatesPerSecond: 0,
+          lastSecondUpdates: 0,
+          maxUpdatesPerSecond: 0,
+          lastUpdateTime: Date.now(),
         },
       },
     });
@@ -178,7 +190,9 @@ describe('PositionControls Component', () => {
       </Provider>
     );
 
-    fireEvent.click(screen.getByText('Refresh'));
+    await act(async () => {
+      fireEvent.click(screen.getByText('Refresh'));
+    });
     
     // Verify error is handled gracefully
     await waitFor(() => {

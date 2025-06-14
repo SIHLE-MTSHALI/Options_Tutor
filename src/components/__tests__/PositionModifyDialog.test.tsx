@@ -41,6 +41,11 @@ describe('PositionModifyDialog Component', () => {
           realizedPL: 0,
           marginUsage: 0,
           isPending: false,
+          priceUpdateTimestamp: 0,
+          updatesPerSecond: 0,
+          lastSecondUpdates: 0,
+          maxUpdatesPerSecond: 0,
+          lastUpdateTime: Date.now(),
         },
       },
     });
@@ -160,6 +165,11 @@ describe('PositionModifyDialog Component', () => {
         portfolio: {
           ...store.getState().portfolio,
           isPending: true,
+          priceUpdateTimestamp: 0,
+          updatesPerSecond: 0,
+          lastSecondUpdates: 0,
+          maxUpdatesPerSecond: 0,
+          lastUpdateTime: Date.now(),
         },
       },
     });
