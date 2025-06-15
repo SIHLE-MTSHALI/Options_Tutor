@@ -25,13 +25,15 @@ const WS_URL = 'ws://localhost:3001'; // Replace with actual WebSocket URL
 export class RealTimeService {
   private socket$: WebSocketSubject<any> | null = null;
   private connectionUrl: string | null = null;
-  private reconnectInterval = 5000; // 5 seconds
+  private initialReconnectInterval = 5000; // 5 seconds
+  private maxReconnectInterval = 60000; // 60 seconds
   private reconnectSubscription: Subscription | null = null;
   private reconnectAttempts = 0;
   private lastMessageTime: number = Date.now();
   private heartbeatIntervalId: NodeJS.Timeout | null = null;
   private priceCache: Map<string, number> = new Map();
   private subscribedSymbols: Set<string> = new Set();
+  private messageQueue: any[] = []; // Queue for messages during disconnects
 
   private resetReconnectionAttempts(): void {
     this.reconnectAttempts = 0;
@@ -51,7 +53,7 @@ export class RealTimeService {
           this.socket$.next('ping');
         }
       }
-    }, 10000) as NodeJS.Timeout;
+    }, 30000) as NodeJS.Timeout; // 30-second heartbeat interval
   }
 
   private stopHeartbeat(): void {
@@ -69,6 +71,16 @@ export class RealTimeService {
   
   // BehaviorSubject for connection status
   public connectionStatus$ = new BehaviorSubject<boolean>(false);
+  
+  // Add connection status to Redux store
+  private updateReduxConnectionStatus(status: boolean): void {
+    if (appStore) {
+      appStore.dispatch({
+        type: 'connection/setStatus',
+        payload: status
+      });
+    }
+  }
 
   constructor() {
     this.setupReconnectionLogic();
@@ -104,12 +116,14 @@ export class RealTimeService {
         openObserver: {
           next: () => {
             this.connectionStatus$.next(true);
+            this.updateReduxConnectionStatus(true);
             console.log('[DEBUG] WebSocket connection opened');
             this.resetReconnectionAttempts();
             this.lastMessageTime = Date.now();
             this.startHeartbeat();
             
-            // Resubscribe to symbols after reconnection
+            // Flush queued messages and resubscribe to symbols
+            this.flushMessageQueue();
             this.subscribedSymbols.forEach(symbol => {
               console.debug(`[DEBUG] Resubscribing to ${symbol} after reconnection`);
               this.subscribe(symbol);
@@ -119,6 +133,7 @@ export class RealTimeService {
         closeObserver: {
           next: () => {
             this.connectionStatus$.next(false);
+            this.updateReduxConnectionStatus(false);
             console.log('[DEBUG] WebSocket connection closed');
             this.stopHeartbeat();
             this.scheduleReconnection();
@@ -128,7 +143,7 @@ export class RealTimeService {
 
       this.socket$.pipe(
         throttleTime(1000), // Throttle to 1 update per second
-        retryWhen(errors => errors.pipe(delay(this.reconnectInterval)))
+        retryWhen(errors => errors.pipe(delay(this.initialReconnectInterval)))
       ).subscribe({
         next: (message: any) => this.handleMessage(message),
         error: (err: any) => console.error('[ERROR] WebSocket error:', err)
@@ -162,6 +177,9 @@ export class RealTimeService {
     if (this.connectionStatus$.value && this.socket$) {
       console.debug(`[DEBUG] Subscribing to ${symbol}`);
       this.socket$.next({ action: 'subscribe', symbol });
+    } else {
+      console.debug(`[DEBUG] Queuing subscribe for ${symbol} (disconnected)`);
+      this.messageQueue.push({ action: 'subscribe', symbol });
     }
   }
 
@@ -173,6 +191,9 @@ export class RealTimeService {
     this.subscribedSymbols.delete(symbol);
     if (this.connectionStatus$.value && this.socket$) {
       this.socket$.next({ action: 'unsubscribe', symbol });
+    } else {
+      console.debug(`[DEBUG] Queuing unsubscribe for ${symbol} (disconnected)`);
+      this.messageQueue.push({ action: 'unsubscribe', symbol });
     }
   }
 
@@ -188,24 +209,31 @@ export class RealTimeService {
   private setupReconnectionLogic(): void {
     // Skip reconnection logic in development mode
     if (process.env.NODE_ENV === 'development') return;
-    
-    this.reconnectSubscription = interval(this.reconnectInterval).subscribe(() => {
-      if (!this.connectionStatus$.value && this.connectionUrl) {
-        console.log(`[RECONNECT] Attempting reconnection (attempt #${this.reconnectAttempts})`);
-        this.reconnectAttempts++;
-        this.connect(this.connectionUrl);
-      }
-    });
+  }
+  
+  private calculateReconnectDelay(): number {
+    // Exponential backoff with jitter: base * 2^attempts + random jitter
+    const baseDelay = Math.min(
+      this.initialReconnectInterval * Math.pow(2, this.reconnectAttempts),
+      this.maxReconnectInterval
+    );
+    const jitter = Math.floor(Math.random() * 1000); // Up to 1s jitter
+    return baseDelay + jitter;
   }
 
 
   private scheduleReconnection(): void {
-    if (!this.reconnectSubscription && this.connectionUrl) {
+    if (!this.connectionUrl) return;
+    
+    const delay = this.calculateReconnectDelay();
+    console.debug(`[RECONNECT] Scheduling reconnection in ${delay}ms (attempt #${this.reconnectAttempts})`);
+    
+    setTimeout(() => {
+      this.reconnectAttempts++;
       if (this.connectionUrl) {
-        const url = this.connectionUrl;
-        setTimeout(() => this.connect(url), this.reconnectInterval);
+        this.connect(this.connectionUrl);
       }
-    }
+    }, delay);
   }
 
   private handleMessage(message: any): void {
@@ -269,6 +297,14 @@ export class RealTimeService {
     } catch (error) {
       console.error('[ERROR] Error processing WebSocket message:', error);
       console.error('Raw message that caused the error:', message);
+    }
+  }
+
+  private flushMessageQueue(): void {
+    while (this.messageQueue.length > 0 && this.connectionStatus$.value && this.socket$) {
+      const message = this.messageQueue.shift();
+      this.socket$.next(message);
+      console.debug(`[DEBUG] Sent queued message: ${message.action} ${message.symbol}`);
     }
   }
 

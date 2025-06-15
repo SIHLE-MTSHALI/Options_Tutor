@@ -52,6 +52,12 @@
 - **Market Data**: Historical options chains with realistic spreads
 - **Volatility Modeling**: Adjustable skew/term structure for Greeks
 - **Strategy Math**: P/L, Greeks, probability calculations
+- **WebSocket Stability**:
+  - Exponential backoff with jitter for reconnections
+  - Heartbeat mechanism to maintain connection
+  - Message queuing during disconnections
+  - Redux store integration for connection status
+  - Development/production environment handling
 - **Persistence**: Secure cloud-synced user profiles
 ### API Credentials Setup
 - **AlphaVantage API Key**:

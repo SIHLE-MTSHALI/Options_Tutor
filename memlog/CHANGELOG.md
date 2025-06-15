@@ -1,4 +1,12 @@
 ## [Unreleased]
+### Added
+- WebSocket stability improvements:
+  - Exponential backoff with jitter for reconnections
+  - Heartbeat mechanism to maintain connection
+  - Message queuing during disconnections
+  - Redux store integration for connection status
+  - Development/production environment handling
+
 ### Fixed
 - TradeThunks error handling test by properly simulating API errors
 
