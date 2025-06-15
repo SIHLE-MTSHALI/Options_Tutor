@@ -22,6 +22,10 @@ module.exports = {
           'css-loader',
           'sass-loader'
         ]
+      },
+      {
+        test: /\.(ico)$/,
+        type: 'asset/resource'
       }
     ]
   },

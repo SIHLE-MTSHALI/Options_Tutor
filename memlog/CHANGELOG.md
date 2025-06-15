@@ -3,6 +3,11 @@
 - TradeThunks error handling test by properly simulating API errors
 
 ### 2025-06-15
+- Added application icon configuration:
+  * Created icon design specifications in PROJECT_SPECS.md
+  * Added icon path to package.json build configuration
+  * Updated webpack to handle .ico asset loading
+  * Updated CHANGELOG with icon implementation details
 - Completed real-time P&L display with WebSocket integration:
   * Implemented connection status indicators
   * Added real-time P&L updates with visual indicators (▲/▼)
@@ -86,4 +91,4 @@
 - Configured `ELECTRON_BUILDER_ALLOW_SYMLINKS=false` environment variable
 
 ### Known Issues
-- Application uses default Electron icon: `public/icon.ico` needs to be created
+- Application icon placeholder needs to be replaced with actual icon file

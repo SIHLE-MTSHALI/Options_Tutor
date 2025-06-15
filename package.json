@@ -10,6 +10,11 @@
     "test": "jest",
     "electron:build": "set ELECTRON_BUILDER_ALLOW_SYMLINKS=false && electron-builder build --windows"
   },
+  "build": {
+    "win": {
+      "icon": "public/icon.ico"
+    }
+  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/SIHLE-MTSHALI/Options_Tutor.git"

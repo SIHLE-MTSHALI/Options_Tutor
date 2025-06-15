@@ -27,8 +27,41 @@ export class RealTimeService {
   private connectionUrl: string | null = null;
   private reconnectInterval = 5000; // 5 seconds
   private reconnectSubscription: Subscription | null = null;
+  private reconnectAttempts = 0;
+  private lastMessageTime: number = Date.now();
+  private heartbeatIntervalId: NodeJS.Timeout | null = null;
   private priceCache: Map<string, number> = new Map();
   private subscribedSymbols: Set<string> = new Set();
+
+  private resetReconnectionAttempts(): void {
+    this.reconnectAttempts = 0;
+    console.debug('[RECONNECT] Reset reconnection attempts counter');
+  }
+
+  private startHeartbeat(): void {
+    if (this.heartbeatIntervalId) return;
+    
+    this.heartbeatIntervalId = setInterval(() => {
+      if (this.connectionStatus$.value && this.socket$) {
+        const now = Date.now();
+        const timeSinceLastMessage = now - this.lastMessageTime;
+        
+        if (timeSinceLastMessage > 30000) {
+          console.warn(`[HEARTBEAT] No message in ${timeSinceLastMessage}ms, sending ping`);
+          this.socket$.next('ping');
+        }
+      }
+    }, 10000) as NodeJS.Timeout;
+  }
+
+  private stopHeartbeat(): void {
+    if (this.heartbeatIntervalId) {
+      clearInterval(this.heartbeatIntervalId);
+      this.heartbeatIntervalId = null;
+    }
+  }
+
+
 
   // Subjects for updates
   public priceUpdates$ = new Subject<{ symbol: string; price: number }>();
@@ -72,6 +105,10 @@ export class RealTimeService {
           next: () => {
             this.connectionStatus$.next(true);
             console.log('[DEBUG] WebSocket connection opened');
+            this.resetReconnectionAttempts();
+            this.lastMessageTime = Date.now();
+            this.startHeartbeat();
+            
             // Resubscribe to symbols after reconnection
             this.subscribedSymbols.forEach(symbol => {
               console.debug(`[DEBUG] Resubscribing to ${symbol} after reconnection`);
@@ -83,6 +120,7 @@ export class RealTimeService {
           next: () => {
             this.connectionStatus$.next(false);
             console.log('[DEBUG] WebSocket connection closed');
+            this.stopHeartbeat();
             this.scheduleReconnection();
           }
         }
@@ -153,11 +191,13 @@ export class RealTimeService {
     
     this.reconnectSubscription = interval(this.reconnectInterval).subscribe(() => {
       if (!this.connectionStatus$.value && this.connectionUrl) {
-        console.log('Attempting to reconnect...');
+        console.log(`[RECONNECT] Attempting reconnection (attempt #${this.reconnectAttempts})`);
+        this.reconnectAttempts++;
         this.connect(this.connectionUrl);
       }
     });
   }
+
 
   private scheduleReconnection(): void {
     if (!this.reconnectSubscription && this.connectionUrl) {
@@ -170,6 +210,14 @@ export class RealTimeService {
 
   private handleMessage(message: any): void {
     try {
+      this.lastMessageTime = Date.now(); // Update last message timestamp
+      
+      // Handle heartbeat pong
+      if (message === 'pong') {
+        console.debug('[HEARTBEAT] Received pong');
+        return;
+      }
+      
       // Skip processing if message is HTTP response
       if (typeof message === 'string' && message.startsWith('HTTP/')) {
         console.error('[ERROR] Received HTTP response instead of WebSocket data:', message.substring(0, 200));
@@ -289,6 +337,7 @@ export class RealTimeService {
     }, 2000);
   }
 }
+
 
 // Export singleton instance
 export const realTimeService = new RealTimeService();

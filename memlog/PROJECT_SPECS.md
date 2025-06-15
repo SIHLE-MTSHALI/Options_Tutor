@@ -73,3 +73,17 @@
 2. **Environment Variable**: `ELECTRON_BUILDER_ALLOW_SYMLINKS=false` must be set
 3. **Icon File**: Place application icon at `public/icon.ico`
 4. **Build Command**: `npm run electron:build`
+
+### Application Icon Specifications
+
+- **Dimensions**: 256x256 pixels
+- **Color Scheme**:
+  - Primary: Dark blue (#0d47a1)
+  - Secondary: Gold (#ffd600)
+- **Design Elements**:
+  - "OT" monogram (Options Tutor)
+  - Subtle options chain visualization motif in background
+  - Clean, modern typography
+- **Implementation**:
+  - File path: `public/icon.ico`
+  - Used in Windows taskbar, application window title bar, and installer branding
