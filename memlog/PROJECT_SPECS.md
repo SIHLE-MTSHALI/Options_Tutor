@@ -66,3 +66,10 @@
   - Use `process.env.REACT_APP_ALPHA_VANTAGE_API_KEY` in code
   - Add `.env` to `.gitignore` for security
 - **Plugin Architecture**: Future expansion capability
+
+### Windows Build Requirements
+
+1. **Pre-build Step**: Always run `node scripts/fix-winCodeSign.js` before building for Windows
+2. **Environment Variable**: `ELECTRON_BUILDER_ALLOW_SYMLINKS=false` must be set
+3. **Icon File**: Place application icon at `public/icon.ico`
+4. **Build Command**: `npm run electron:build`

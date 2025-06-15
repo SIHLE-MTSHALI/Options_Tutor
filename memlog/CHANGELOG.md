@@ -78,3 +78,12 @@
 
 ### Fixed
 - Added `priceUpdateTimestamp: 0` to all test mock states to resolve TypeScript errors after adding real-time P&L feature
+
+## [1.0.0] - 2025-06-15
+### Fixed
+- Resolved Windows build symlink privilege error by creating custom `fix-winCodeSign.js` script
+- Added pre-build step to filter macOS files from winCodeSign package
+- Configured `ELECTRON_BUILDER_ALLOW_SYMLINKS=false` environment variable
+
+### Known Issues
+- Application uses default Electron icon: `public/icon.ico` needs to be created
