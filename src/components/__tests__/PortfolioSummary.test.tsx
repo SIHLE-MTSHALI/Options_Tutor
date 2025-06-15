@@ -115,9 +115,12 @@ describe('PortfolioSummary Component', () => {
       </Provider>
     );
 
-    // Check connection status
-    // Check connection status with actual text
-    expect(screen.getByText('● Disconnected')).toBeInTheDocument();
+    // Check connection status using test IDs
+    const statusIndicator = screen.getByTestId('connection-status-indicator');
+    const statusText = screen.getByTestId('connection-status-text');
+    
+    expect(statusIndicator).toHaveClass('disconnected');
+    expect(statusText).toHaveTextContent('Disconnected');
     
     // Check position controls
     expect(screen.getAllByText('Modify Position')).toHaveLength(2);

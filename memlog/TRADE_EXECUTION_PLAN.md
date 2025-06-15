@@ -100,3 +100,25 @@ gantt
 2. Execute Phase 1 (TradeService creation)
 3. Verify service-layer functionality
 4. Proceed to thunk implementation
+### Verification Approach
+The integration tests follow a state-based verification approach:
+1. Mock dependencies (MarginService, ApiService)
+2. Setup representative application state
+3. Execute trade through TradeService
+4. Verify:
+   - Correct portfolio updates
+   - Proper error handling
+   - Margin validation logic
+   - Stock quote fetching behavior
+
+### Test Case Summary
+| Scenario | Description | Covered Requirements |
+|----------|-------------|----------------------|
+| Valid Trade | Successful position creation | TR-EXEC-001, TR-EXEC-002 |
+| Invalid Legs | Rejects malformed option legs | TR-EXEC-003 |
+| Insufficient Margin | Blocks trades exceeding buying power | TR-EXEC-004 |
+| Quote Fetching | Automatically fetches missing stock quotes | TR-EXEC-005 |
+| API Errors | Handles failed quote requests | TR-EXEC-006 |
+| Margin Calculation | Validates complex option strategies | TR-EXEC-007 |
+
+[View full implementation](../../src/services/__tests__/TradeService.integration.test.ts)

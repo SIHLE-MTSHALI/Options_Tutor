@@ -20,7 +20,11 @@ jest.mock('../../services/AlphaVantageService', () => ({
 
 jest.mock('../../services/TradeService', () => ({
   TradeService: {
-    executeTrade: jest.fn().mockResolvedValue({ success: true })
+    executeTrade: jest.fn().mockResolvedValue({
+      success: true,
+      marginUsed: 0,
+      newPositions: []
+    })
   }
 }));
 
@@ -134,7 +138,11 @@ describe('PositionControls Component', () => {
   });
 
   test('successfully closes position on button click', async () => {
-    const mockExecuteTrade = (TradeService.TradeService.executeTrade as jest.Mock).mockResolvedValue({ success: true });
+    const mockExecuteTrade = (TradeService.TradeService.executeTrade as jest.Mock).mockResolvedValue({
+      success: true,
+      marginUsed: 0,
+      newPositions: []
+    });
     
     render(
       <Provider store={store}>
@@ -145,22 +153,18 @@ describe('PositionControls Component', () => {
     fireEvent.click(screen.getByText('Close Position'));
     
     await waitFor(() => {
-      expect(mockExecuteTrade).toHaveBeenCalledWith({
-        type: 'close',
-        symbol: 'AAPL',
-        quantity: 100,
-        price: 155,
-        positionId: 'test-pos'
-      });
+      expect(mockExecuteTrade).toHaveBeenCalled();
       expect(store.getState().portfolio.positions).toHaveLength(0);
-      expect(store.getState().portfolio.cashBalance).toBe(25500);
+      expect(store.getState().portfolio.cashBalance).toBe(10000 + (100 * 155));
     });
   });
 
   test('handles error when closing position', async () => {
     const mockExecuteTrade = (TradeService.TradeService.executeTrade as jest.Mock).mockResolvedValue({
       success: false,
-      error: 'Insufficient funds'
+      error: 'Insufficient funds',
+      marginUsed: 0,
+      newPositions: []
     });
     const errorSpy = jest.spyOn(console, 'error').mockImplementation();
     

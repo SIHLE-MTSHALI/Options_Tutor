@@ -12,9 +12,11 @@ import {
 
 export const executeTradeThunk = createAsyncThunk(
   'trade/executeTrade',
-  async (legs: OptionLeg[], { dispatch, getState }) => {
+  async (legs: OptionLeg[], { dispatch, getState, rejectWithValue }) => {
     try {
       const marginUsed = await TradeService.executeTrade(legs, getState as () => RootState, dispatch);
+      
+      // Successful execution
       dispatch(executeTrade({
         legs,
         marginUsed,
@@ -22,9 +24,16 @@ export const executeTradeThunk = createAsyncThunk(
       }));
       return marginUsed;
     } catch (error: unknown) {
-      const errorMessage = error instanceof Error ? error.message : 'Unknown trade error';
+      let errorMessage = 'Trade execution failed';
+      
+      if (typeof error === 'object' && error !== null && 'message' in error) {
+        errorMessage = (error as { message: string }).message;
+      } else if (typeof error === 'string') {
+        errorMessage = error;
+      }
+      
       dispatch(setTradeError(errorMessage));
-      throw error;
+      return rejectWithValue(errorMessage);
     }
   }
 );

@@ -1,4 +1,4 @@
-import { HistoricalDataService } from '../historicalDataService';
+import { HistoricalDataService, DataFetchError } from '../historicalDataService';
 import { OptionChain } from '../../redux/marketDataSlice';
 
 // Mock fetch
@@ -90,7 +90,7 @@ describe('HistoricalDataService', () => {
     expect(fetch).not.toHaveBeenCalled();
   });
 
-  it('handles API errors', async () => {
+  it('throws DataFetchError for API errors', async () => {
     (fetch as jest.Mock).mockResolvedValueOnce({
       ok: false,
       statusText: 'API limit reached'
@@ -98,7 +98,15 @@ describe('HistoricalDataService', () => {
 
     await expect(HistoricalDataService.fetchHistoricalOptions('TSLA', '2023-12-15'))
       .rejects
-      .toThrow('Historical data fetch failed');
+      .toThrow(DataFetchError);
+  });
+
+  it('throws DataFetchError for network errors', async () => {
+    (fetch as jest.Mock).mockRejectedValueOnce(new Error('Network error'));
+
+    await expect(HistoricalDataService.fetchHistoricalOptions('TSLA', '2023-12-15'))
+      .rejects
+      .toThrow(DataFetchError);
   });
 
   describe('normalizeOptionsData', () => {

@@ -7,6 +7,14 @@ import { OptionChain } from '../redux/marketDataSlice';
 const API_KEY = 'YOUR_API_KEY'; // Placeholder - user should replace with actual key
 const CACHE_TTL = 24 * 60 * 60 * 1000; // 24 hours in milliseconds
 
+// Custom error for data fetch failures
+export class DataFetchError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'DataFetchError';
+  }
+}
+
 type CacheEntry = {
   timestamp: number;
   data: OptionChain;
@@ -35,7 +43,7 @@ export class HistoricalDataService {
       );
       
       if (!response.ok) {
-        throw new Error(`AlphaVantage API error: ${response.statusText}`);
+        throw new DataFetchError(`AlphaVantage API error: ${response.statusText}`);
       }
 
       const apiData = await response.json();
@@ -44,8 +52,14 @@ export class HistoricalDataService {
       this.addToCache(cacheKey, normalizedData);
       return normalizedData;
     } catch (error) {
-      console.error('Failed to fetch historical options data:', error);
-      throw new Error('Historical data fetch failed');
+      // Log the error with additional context
+      console.error(`Historical data fetch failed for ${symbol}/${expiry}:`, error);
+      
+      // Throw custom error for better error handling
+      if (error instanceof DataFetchError) {
+        throw error;
+      }
+      throw new DataFetchError('Historical data fetch failed');
     }
   }
 
