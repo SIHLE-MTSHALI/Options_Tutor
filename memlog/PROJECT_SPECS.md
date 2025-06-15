@@ -53,4 +53,16 @@
 - **Volatility Modeling**: Adjustable skew/term structure for Greeks
 - **Strategy Math**: P/L, Greeks, probability calculations
 - **Persistence**: Secure cloud-synced user profiles
+### API Credentials Setup
+- **AlphaVantage API Key**:
+  1. Register for a free API key at [AlphaVantage](https://www.alphavantage.co/support/#api-key)
+  2. Create `.env` file in project root with:
+     ```
+     REACT_APP_ALPHA_VANTAGE_API_KEY=your_api_key_here
+     ```
+  3. Restart development server after adding/changing keys
+- **Environment Management**:
+  - Never commit `.env` files to version control
+  - Use `process.env.REACT_APP_ALPHA_VANTAGE_API_KEY` in code
+  - Add `.env` to `.gitignore` for security
 - **Plugin Architecture**: Future expansion capability

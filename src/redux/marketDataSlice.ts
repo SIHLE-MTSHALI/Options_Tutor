@@ -24,16 +24,26 @@ interface MarketDataState {
   optionChains: {
     [symbol: string]: OptionChain;
   };
+  historicalOptionChains: {
+    [symbol: string]: {
+      [expiry: string]: OptionChain;
+    };
+  };
   selectedSymbol: string;
-  stockQuotes: Record<string, { price: number }>; // Added stockQuotes
+  stockQuotes: Record<string, { price: number }>;
+  historicalLoading: boolean;
+  historicalError: string | null;
 }
 
 const initialState: MarketDataState = {
   currentPrice: 150,
   volatility: 0.3,
   optionChains: {},
+  historicalOptionChains: {},
   selectedSymbol: 'TSLA',
-  stockQuotes: {}, // Initialize as empty object
+  stockQuotes: {},
+  historicalLoading: false,
+  historicalError: null,
 };
 
 export const marketDataSlice = createSlice({
@@ -56,6 +66,22 @@ export const marketDataSlice = createSlice({
     updateStockQuote: (state, action: PayloadAction<{symbol: string; price: number}>) => {
       const { symbol, price } = action.payload;
       state.stockQuotes[symbol] = { price };
+    },
+    fetchHistoricalDataStart: (state) => {
+      state.historicalLoading = true;
+      state.historicalError = null;
+    },
+    fetchHistoricalDataSuccess: (state, action: PayloadAction<{symbol: string; expiry: string; chain: OptionChain}>) => {
+      const { symbol, expiry, chain } = action.payload;
+      if (!state.historicalOptionChains[symbol]) {
+        state.historicalOptionChains[symbol] = {};
+      }
+      state.historicalOptionChains[symbol][expiry] = chain;
+      state.historicalLoading = false;
+    },
+    fetchHistoricalDataFailure: (state, action: PayloadAction<string>) => {
+      state.historicalLoading = false;
+      state.historicalError = action.payload;
     }
   },
 });
@@ -65,7 +91,10 @@ export const {
   updateVolatility,
   updateOptionChain,
   selectSymbol,
-  updateStockQuote // Added new action
+  updateStockQuote,
+  fetchHistoricalDataStart,
+  fetchHistoricalDataSuccess,
+  fetchHistoricalDataFailure
 } = marketDataSlice.actions;
 
 export default marketDataSlice.reducer;

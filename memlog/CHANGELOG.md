@@ -8,6 +8,14 @@
   * Added real-time P&L updates with visual indicators (▲/▼)
   * Integrated throttling to limit UI updates to 1/second
   * Validated with automated tests
+- Implemented Historical Data Service:
+  * Integrated AlphaVantage API for options chain data
+  * Added caching layer with TTL expiration
+  * Created data normalization functions
+  * Added Redux store integration via thunks
+  * Implemented comprehensive unit tests
+  * Fixed normalization method access (made public)
+  * Added test cases for empty/malformed API responses
 
 ### 2025-06-14
 - Fixed PortfolioSummary component tests:

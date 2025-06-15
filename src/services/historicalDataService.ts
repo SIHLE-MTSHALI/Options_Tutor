@@ -1,89 +1,121 @@
-import { AppDispatch } from '@redux/store';
-import { updateOptionChain, OptionChain, OptionData } from '@redux/marketDataSlice';
+/**
+ * HistoricalDataService - Fetches and processes historical options data
+ * Uses AlphaVantage API with 24-hour caching
+ */
+import { OptionChain } from '../redux/marketDataSlice';
 
-interface HistoricalDataOptions {
-  symbol: string;
-  startDate: string;
-  endDate: string;
-  expiry?: string;
-}
+const API_KEY = 'YOUR_API_KEY'; // Placeholder - user should replace with actual key
+const CACHE_TTL = 24 * 60 * 60 * 1000; // 24 hours in milliseconds
+
+type CacheEntry = {
+  timestamp: number;
+  data: OptionChain;
+};
+
+const dataCache: Record<string, CacheEntry> = {};
 
 export class HistoricalDataService {
-  private dispatch: AppDispatch;
-  private cache: Map<string, OptionChain> = new Map();
-
-  constructor(dispatch: AppDispatch) {
-    this.dispatch = dispatch;
-  }
-
-  async fetchHistoricalChain(options: HistoricalDataOptions): Promise<void> {
-    const cacheKey = this.getCacheKey(options);
+  /**
+   * Fetch historical options chain for a symbol
+   * @param symbol Stock ticker symbol
+   * @param expiry Option expiration date (YYYY-MM-DD)
+   * @returns Normalized OptionChain data
+   */
+  static async fetchHistoricalOptions(symbol: string, expiry: string): Promise<OptionChain> {
+    const cacheKey = `${symbol}-${expiry}`;
+    const cachedData = this.getFromCache(cacheKey);
     
-    if (this.cache.has(cacheKey)) {
-      const cachedData = this.cache.get(cacheKey)!;
-      this.dispatch(updateOptionChain({
-        symbol: options.symbol,
-        chain: cachedData
-      }));
-      return;
+    if (cachedData) {
+      return cachedData;
     }
 
     try {
-      const response = await fetch(this.buildUrl(options));
-      const data = await response.json();
+      const response = await fetch(
+        `https://www.alphavantage.co/query?function=OPTION_CHAIN&symbol=${symbol}&expiration=${expiry}&apikey=${API_KEY}`
+      );
       
-      const normalizedChain = this.normalizeChain(data);
-      this.cache.set(cacheKey, normalizedChain);
+      if (!response.ok) {
+        throw new Error(`AlphaVantage API error: ${response.statusText}`);
+      }
+
+      const apiData = await response.json();
+      const normalizedData = this.normalizeOptionsData(apiData);
       
-      this.dispatch(updateOptionChain({
-        symbol: options.symbol,
-        chain: normalizedChain
-      }));
+      this.addToCache(cacheKey, normalizedData);
+      return normalizedData;
     } catch (error) {
-      console.error('Failed to fetch historical data:', error);
-      throw error;
+      console.error('Failed to fetch historical options data:', error);
+      throw new Error('Historical data fetch failed');
     }
   }
 
-  private getCacheKey(options: HistoricalDataOptions): string {
-    return `${options.symbol}-${options.startDate}-${options.endDate}`;
-  }
-
-  private buildUrl(options: HistoricalDataOptions): string {
-    if (process.env.NODE_ENV === 'development') {
-      return '/api/historical-options';
-    }
-    return `https://api.example.com/historical-options/${options.symbol}?start=${options.startDate}&end=${options.endDate}`;
-  }
-
-  private normalizeChain(rawData: any): OptionChain {
-    const chain: OptionChain = {};
+  /**
+   * Normalize AlphaVantage options data to our OptionChain format
+   * @param apiData Raw data from AlphaVantage
+   * @returns Normalized OptionChain
+   */
+  static normalizeOptionsData(apiData: any): OptionChain {
+    const normalized: OptionChain = {};
     
-    rawData.forEach((entry: any) => {
-      const strike = entry.strike.toFixed(2);
+    // Process calls
+    apiData.calls.forEach((call: any) => {
+      const strike = parseFloat(call.strike);
+      if (!normalized[strike]) normalized[strike] = { calls: [], puts: [] };
       
-      if (!chain[strike]) {
-        chain[strike] = { calls: [], puts: [] };
-      }
-
-      const optionData: OptionData = {
-        expiry: entry.expiry,
-        strike: entry.strike,
-        lastPrice: entry.lastPrice,
-        bid: entry.bid,
-        ask: entry.ask,
-        volume: entry.volume,
-        openInterest: entry.openInterest,
-        impliedVol: entry.impliedVol
-      };
-
-      if (entry.optionType === 'call') {
-        chain[strike].calls.push(optionData);
-      } else {
-        chain[strike].puts.push(optionData);
-      }
+      normalized[strike].calls.push({
+        expiry: call.expiration,
+        strike,
+        lastPrice: parseFloat(call['last price']),
+        bid: parseFloat(call.bid),
+        ask: parseFloat(call.ask),
+        volume: parseInt(call.volume),
+        openInterest: parseInt(call['open interest']),
+        impliedVol: parseFloat(call['implied volatility']),
+      });
     });
 
-    return chain;
+    // Process puts
+    apiData.puts.forEach((put: any) => {
+      const strike = parseFloat(put.strike);
+      if (!normalized[strike]) normalized[strike] = { calls: [], puts: [] };
+      
+      normalized[strike].puts.push({
+        expiry: put.expiration,
+        strike,
+        lastPrice: parseFloat(put['last price']),
+        bid: parseFloat(put.bid),
+        ask: parseFloat(put.ask),
+        volume: parseInt(put.volume),
+        openInterest: parseInt(put['open interest']),
+        impliedVol: parseFloat(put['implied volatility']),
+      });
+    });
+
+    return normalized;
+  }
+
+  /**
+   * Retrieve data from cache if valid
+   * @param cacheKey Cache key (symbol-expiry)
+   * @returns Cached data or null if expired/missing
+   */
+  private static getFromCache(cacheKey: string): OptionChain | null {
+    const entry = dataCache[cacheKey];
+    if (entry && Date.now() - entry.timestamp < CACHE_TTL) {
+      return entry.data;
+    }
+    return null;
+  }
+
+  /**
+   * Add data to cache
+   * @param cacheKey Cache key (symbol-expiry)
+   * @param data Data to cache
+   */
+  private static addToCache(cacheKey: string, data: OptionChain): void {
+    dataCache[cacheKey] = {
+      timestamp: Date.now(),
+      data
+    };
   }
 }
