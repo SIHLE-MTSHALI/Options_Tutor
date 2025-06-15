@@ -8,6 +8,7 @@ import portfolioReducer from '../../redux/portfolioSlice';
 import * as AlphaVantageService from '../../services/AlphaVantageService';
 import * as TradeService from '../../services/TradeService';
 import { Position } from '../../redux/portfolioSlice';
+import { initRealTimeService } from '../../services/realTimeService';
 
 jest.mock('../../services/AlphaVantageService', () => ({
   AlphaVantageService: {
@@ -60,6 +61,7 @@ describe('PositionControls Component', () => {
 
     (AlphaVantageService.AlphaVantageService.getInstance().getStockQuote as jest.Mock)
       .mockResolvedValue(155);
+    initRealTimeService(store);
   });
 
   test('renders position data correctly', () => {

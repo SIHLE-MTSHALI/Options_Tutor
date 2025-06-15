@@ -118,6 +118,9 @@ export const portfolioSlice = createSlice({
         state.maxUpdatesPerSecond = Math.max(state.maxUpdatesPerSecond, state.lastSecondUpdates);
         state.lastSecondUpdates = updates.length;
         state.lastUpdateTime = now;
+        
+        // Log performance metrics
+        console.log(`[Performance] Updates: ${updates.length} | Per Second: ${state.updatesPerSecond} | Max: ${state.maxUpdatesPerSecond}`);
       }
     },
     modifyPosition: (state, action: PayloadAction<{ id: string; stopLoss?: number; takeProfit?: number }>) => {
@@ -249,6 +252,7 @@ export const portfolioSlice = createSlice({
 let isListenerSetup = false;
 let batchUpdates: Array<{ symbol: string; price: number; timestamp: number }> = [];
 let batchTimer: NodeJS.Timeout | null = null;
+let lastBatchTime = 0;
 
 export const setupPriceListener = (dispatch: any) => {
   if (!isListenerSetup) {
@@ -259,17 +263,40 @@ export const setupPriceListener = (dispatch: any) => {
         price: update.price,
         timestamp: Date.now()
       });
+      console.debug(`Received price update for ${update.symbol}: ${update.price}`);
       
       // Start batch timer if not already running
       if (!batchTimer) {
+        console.debug(`Starting batch timer with ${batchUpdates.length} updates`);
         batchTimer = setTimeout(() => {
-          dispatch(portfolioSlice.actions.batchUpdatePositionPrices(batchUpdates));
-          batchUpdates = [];
+          const now = Date.now();
+          const timeSinceLast = now - lastBatchTime;
+          
+          // Enforce strict 1-second minimum between updates
+          if (timeSinceLast >= 1000) {
+            console.debug(`Processing batch of ${batchUpdates.length} updates after ${timeSinceLast}ms`);
+            dispatch(portfolioSlice.actions.batchUpdatePositionPrices(batchUpdates));
+            lastBatchTime = now;
+            batchUpdates = [];
+          } else {
+            // If not enough time has passed, reschedule
+            const remaining = 1000 - timeSinceLast;
+            console.debug(`Delaying batch by ${remaining}ms to enforce 1s throttle`);
+            batchTimer = setTimeout(() => {
+              console.debug(`Processing delayed batch of ${batchUpdates.length} updates`);
+              dispatch(portfolioSlice.actions.batchUpdatePositionPrices(batchUpdates));
+              lastBatchTime = Date.now();
+              batchUpdates = [];
+              batchTimer = null;
+            }, remaining);
+            return;
+          }
           batchTimer = null;
-        }, 500);
+        }, 1000);
       }
     });
     isListenerSetup = true;
+    console.info('Price listener initialized');
   }
 };
 

@@ -1,3 +1,14 @@
+## [Unreleased]
+### Fixed
+- TradeThunks error handling test by properly simulating API errors
+
+### 2025-06-15
+- Completed real-time P&L display with WebSocket integration:
+  * Implemented connection status indicators
+  * Added real-time P&L updates with visual indicators (▲/▼)
+  * Integrated throttling to limit UI updates to 1/second
+  * Validated with automated tests
+
 ### 2025-06-14
 - Fixed PortfolioSummary component tests:
   - Added `within` import from React Testing Library

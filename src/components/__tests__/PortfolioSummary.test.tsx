@@ -6,6 +6,7 @@ import PortfolioSummary from '../PortfolioSummary';
 import { configureStore } from '@reduxjs/toolkit';
 import portfolioReducer from '../../redux/portfolioSlice';
 import { Position } from '../../redux/portfolioSlice';
+import { initRealTimeService } from '../../services/realTimeService';
 
 const mockPositions: Position[] = [
   {
@@ -56,6 +57,7 @@ describe('PortfolioSummary Component', () => {
         },
       },
     });
+    initRealTimeService(store);
   });
 
   test('renders portfolio summary with correct values', () => {
@@ -102,8 +104,8 @@ describe('PortfolioSummary Component', () => {
     expect(screen.getByText('Qty: 50')).toBeInTheDocument();
     
     // Check position prices
-    expect(screen.getByText('$155.00')).toBeInTheDocument();
-    expect(screen.getByText('$220.00')).toBeInTheDocument();
+    expect(screen.getByText('Current Price: $155.00')).toBeInTheDocument();
+    expect(screen.getByText('Current Price: $220.00')).toBeInTheDocument();
   });
 
   test('displays position controls and connection status', () => {

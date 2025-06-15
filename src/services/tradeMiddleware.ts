@@ -9,8 +9,13 @@ interface TradeAction extends AnyAction {
   payload: OptionLeg[];
 }
 
-export const tradeMiddleware: Middleware<{}, RootState> = store => next => (action: TradeAction) => {
-  if (action.type !== 'trading/executeTrade') {
+// Type guard for TradeAction
+function isTradeAction(action: unknown): action is TradeAction {
+  return (action as TradeAction)?.type === 'trading/executeTrade';
+}
+
+export const tradeMiddleware: Middleware<{}, RootState> = store => next => (action: unknown) => {
+  if (!isTradeAction(action)) {
     return next(action);
   }
 
@@ -26,7 +31,7 @@ export const tradeMiddleware: Middleware<{}, RootState> = store => next => (acti
   }
 
   // Calculate total margin requirement
-  const margin = legs.reduce((total, leg) => {
+  const margin = legs.reduce((total: number, leg: OptionLeg) => {
     return total + calculateMargin(leg, state);
   }, 0);
   
@@ -38,16 +43,17 @@ export const tradeMiddleware: Middleware<{}, RootState> = store => next => (acti
 
   // Process each leg
   try {
-    legs.forEach(leg => {
+    legs.forEach((leg: OptionLeg) => {
       store.dispatch(addPosition({
         id: `${leg.id}-${Date.now()}`,
-        symbol: 'TSLA', // TODO: Get from leg
+        symbol: leg.symbol,
         type: leg.type,
         quantity: leg.action === 'buy' ? leg.quantity : -leg.quantity,
         strike: leg.strike,
         expiry: leg.expiry,
         purchasePrice: leg.premium,
-        currentPrice: leg.premium
+        currentPrice: leg.premium,
+        unrealizedPL: 0
       }));
     });
 

@@ -1,12 +1,28 @@
 import { webSocket, WebSocketSubject } from 'rxjs/webSocket';
 import { Subject, interval, Subscription, BehaviorSubject } from 'rxjs';
-import { retryWhen, delay } from 'rxjs/operators';
+import { throttleTime, retryWhen, delay } from 'rxjs/operators';
+import { batchUpdatePositionPrices, Position } from '../redux/portfolioSlice';
+
+// Store reference will be injected via init function
+let appStore: any = null;
 
 /**
- * RealTimeService - Manages WebSocket connections for real-time market data
- * Handles connection, reconnection, price updates, and connection status
+ * Initialize RealTimeService with Redux store reference
+ * @param store Redux store instance
  */
-class RealTimeService {
+export function initRealTimeService(store: any) {
+  appStore = store;
+}
+
+const WS_URL = 'ws://localhost:3001'; // Replace with actual WebSocket URL
+
+/**
+ * Unified RealTimeService - Manages WebSocket connections for:
+ * 1. Real-time portfolio P&L updates
+ * 2. Real-time market price updates
+ * Handles connection, reconnection, and data validation
+ */
+export class RealTimeService {
   private socket$: WebSocketSubject<any> | null = null;
   private connectionUrl: string | null = null;
   private reconnectInterval = 5000; // 5 seconds
@@ -23,6 +39,11 @@ class RealTimeService {
 
   constructor() {
     this.setupReconnectionLogic();
+    // In development, skip WebSocket and use mock data
+    if (process.env.NODE_ENV === 'development') {
+      console.debug('[DEBUG] Development mode: Starting mock data simulation');
+      this.simulateMockData();
+    }
   }
 
   /**
@@ -30,34 +51,53 @@ class RealTimeService {
    * @param url WebSocket server URL
    */
   connect(url: string): void {
-    if (this.connectionStatus$.value) return;
+    // Skip connection in development mode
+    if (process.env.NODE_ENV === 'development') {
+      console.debug('[DEBUG] Skipping WebSocket connection in development mode');
+      return;
+    }
+    
+    if (this.connectionStatus$.value) {
+      console.debug('[DEBUG] Already connected to WebSocket');
+      return;
+    }
+    
     this.connectionUrl = url;
+    console.debug('[DEBUG] Connecting to WebSocket service at', url);
 
-    this.socket$ = webSocket({
-      url,
-      openObserver: {
-        next: () => {
-          this.connectionStatus$.next(true);
-          console.log('WebSocket connected');
-          // Resubscribe to symbols after reconnection
-          this.subscribedSymbols.forEach(symbol => this.subscribe(symbol));
+    try {
+      this.socket$ = webSocket({
+        url,
+        openObserver: {
+          next: () => {
+            this.connectionStatus$.next(true);
+            console.log('[DEBUG] WebSocket connection opened');
+            // Resubscribe to symbols after reconnection
+            this.subscribedSymbols.forEach(symbol => {
+              console.debug(`[DEBUG] Resubscribing to ${symbol} after reconnection`);
+              this.subscribe(symbol);
+            });
+          }
+        },
+        closeObserver: {
+          next: () => {
+            this.connectionStatus$.next(false);
+            console.log('[DEBUG] WebSocket connection closed');
+            this.scheduleReconnection();
+          }
         }
-      },
-      closeObserver: {
-        next: () => {
-          this.connectionStatus$.next(false);
-          console.log('WebSocket disconnected');
-          this.scheduleReconnection();
-        }
-      }
-    });
+      });
 
-    this.socket$!.pipe(
-      retryWhen(errors => errors.pipe(delay(this.reconnectInterval)))
-    ).subscribe({
-      next: (message: any) => this.handleMessage(message),
-      error: (err: any) => console.error('WebSocket error:', err)
-    });
+      this.socket$.pipe(
+        throttleTime(1000), // Throttle to 1 update per second
+        retryWhen(errors => errors.pipe(delay(this.reconnectInterval)))
+      ).subscribe({
+        next: (message: any) => this.handleMessage(message),
+        error: (err: any) => console.error('[ERROR] WebSocket error:', err)
+      });
+    } catch (error) {
+      console.error('[ERROR] WebSocket connection failed:', error);
+    }
   }
 
   /**
@@ -82,6 +122,7 @@ class RealTimeService {
   subscribe(symbol: string): void {
     this.subscribedSymbols.add(symbol);
     if (this.connectionStatus$.value && this.socket$) {
+      console.debug(`[DEBUG] Subscribing to ${symbol}`);
       this.socket$.next({ action: 'subscribe', symbol });
     }
   }
@@ -107,6 +148,9 @@ class RealTimeService {
   }
 
   private setupReconnectionLogic(): void {
+    // Skip reconnection logic in development mode
+    if (process.env.NODE_ENV === 'development') return;
+    
     this.reconnectSubscription = interval(this.reconnectInterval).subscribe(() => {
       if (!this.connectionStatus$.value && this.connectionUrl) {
         console.log('Attempting to reconnect...');
@@ -117,55 +161,134 @@ class RealTimeService {
 
   private scheduleReconnection(): void {
     if (!this.reconnectSubscription && this.connectionUrl) {
-      setTimeout(() => this.connect(this.connectionUrl!), this.reconnectInterval);
+      if (this.connectionUrl) {
+        const url = this.connectionUrl;
+        setTimeout(() => this.connect(url), this.reconnectInterval);
+      }
     }
   }
 
-  private handleMessage(message: { symbol: string; price: number, pl?: number }): void {
-    if (message && message.symbol) {
-      if (message.price) {
-        // Update cache with latest price
-        this.priceCache.set(message.symbol, message.price);
-        
-        // Emit price update to subscribers
-        this.priceUpdates$.next({
-          symbol: message.symbol,
-          price: message.price
-        });
+  private handleMessage(message: any): void {
+    try {
+      // Skip processing if message is HTTP response
+      if (typeof message === 'string' && message.startsWith('HTTP/')) {
+        console.error('[ERROR] Received HTTP response instead of WebSocket data:', message.substring(0, 200));
+        return;
       }
       
-      if (message.pl !== undefined) {
-        // Emit P&L update to subscribers
-        this.plUpdates$.next({
-          symbol: message.symbol,
-          pl: message.pl
-        });
+      // Parse JSON if needed
+      const parsed = typeof message === 'string' ? JSON.parse(message) : message;
+      
+      // Handle portfolio P&L updates (array of updates)
+      if (Array.isArray(parsed)) {
+        console.debug('[DEBUG] Received portfolio updates:', parsed);
+        const updates = this.validatePortfolioUpdates(parsed);
+        // Convert to price updates format expected by Redux
+        const priceUpdates = updates.map(position => ({
+          symbol: position.symbol,
+          price: position.currentPrice,
+          timestamp: Date.now()
+        }));
+        if (appStore) {
+          appStore.dispatch(batchUpdatePositionPrices(priceUpdates));
+        } else {
+          console.error('[ERROR] Store not initialized in realTimeService');
+        }
+        return;
       }
+      
+      // Handle price updates (single symbol update)
+      if (parsed && parsed.symbol) {
+        if (parsed.price) {
+          console.debug(`[DEBUG] Received price update for ${parsed.symbol}: ${parsed.price}`);
+          // Update cache with latest price
+          this.priceCache.set(parsed.symbol, parsed.price);
+          
+          // Emit price update to subscribers
+          this.priceUpdates$.next({
+            symbol: parsed.symbol,
+            price: parsed.price
+          });
+        }
+        if (parsed.unrealizedPnl) {
+          console.debug(`[DEBUG] Received P&L update for ${parsed.symbol}: ${parsed.unrealizedPnl}`);
+          this.plUpdates$.next({
+            symbol: parsed.symbol,
+            pl: parsed.unrealizedPnl
+          });
+        }
+      }
+    } catch (error) {
+      console.error('[ERROR] Error processing WebSocket message:', error);
+      console.error('Raw message that caused the error:', message);
     }
+  }
+
+  private validatePortfolioUpdates(message: any): Position[] {
+    if (!Array.isArray(message)) {
+      console.error('[ERROR] Invalid message format: expected array');
+      throw new Error('Invalid message format');
+    }
+
+    return message.map(update => {
+      if (typeof update !== 'object' || update === null) {
+        console.error('[ERROR] Invalid update format:', update);
+        throw new Error('Invalid update format');
+      }
+
+      const { symbol, position, averagePrice, unrealizedPnl } = update;
+      if (typeof symbol !== 'string' || 
+          typeof position !== 'number' || 
+          typeof averagePrice !== 'number' || 
+          typeof unrealizedPnl !== 'number') {
+        console.error('[ERROR] Invalid update fields:', update);
+        throw new Error('Invalid update fields');
+      }
+
+      return {
+        symbol,
+        quantity: position,
+        purchasePrice: averagePrice,
+        currentPrice: averagePrice + unrealizedPnl/position,
+        unrealizedPL: unrealizedPnl
+      } as Position;
+    });
+  }
+
+  private simulateMockData(): void {
+    const symbols = ['AAPL', 'MSFT', 'GOOGL', 'AMZN', 'TSLA'];
+    setInterval(() => {
+      // Simulate portfolio updates
+      const mockPosition: Position = {
+        id: `mock-${symbols[Math.floor(Math.random() * symbols.length)]}`,
+        symbol: symbols[Math.floor(Math.random() * symbols.length)],
+        type: 'stock',
+        quantity: Math.floor(Math.random() * 100),
+        purchasePrice: Math.random() * 300,
+        currentPrice: Math.random() * 300,
+        unrealizedPL: (Math.random() - 0.5) * 1000
+      };
+      console.log('[MOCK] Dispatching mock portfolio update:', mockPosition);
+      if (appStore) {
+        appStore.dispatch(batchUpdatePositionPrices([{
+          symbol: mockPosition.symbol,
+          price: mockPosition.currentPrice,
+          timestamp: Date.now()
+        }]));
+      } else {
+        console.error('[ERROR] Store not initialized in realTimeService');
+      }
+      
+      // Simulate price updates
+      const priceUpdate = {
+        symbol: symbols[Math.floor(Math.random() * symbols.length)],
+        price: Math.random() * 300
+      };
+      console.log('[MOCK] Dispatching mock price update:', priceUpdate);
+      this.priceUpdates$.next(priceUpdate);
+    }, 2000);
   }
 }
 
-// Export as singleton instance
+// Export singleton instance
 export const realTimeService = new RealTimeService();
-
-// For testing purposes - Mock version when in development
-if (typeof process !== 'undefined' && process.env.NODE_ENV === 'development') {
-  // Mock connection status
-  realTimeService.connectionStatus$.next(true);
-  
-  // Mock price updates every second
-  setInterval(() => {
-    const mockPrice = Math.random() * 100 + 50;
-    const mockPL = (mockPrice - 75) * 10; // Example calculation
-    
-    realTimeService.priceUpdates$.next({
-      symbol: 'MOCK',
-      price: mockPrice
-    });
-    
-    realTimeService.plUpdates$.next({
-      symbol: 'MOCK',
-      pl: mockPL
-    });
-  }, 1000);
-}
