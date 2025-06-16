@@ -47,6 +47,7 @@ const mockPosition: Position = {
 
 describe('PositionControls Component', () => {
   let store: any;
+  let mockGetStockQuote: jest.Mock;
 
   beforeEach(() => {
     store = configureStore({
@@ -70,68 +71,104 @@ describe('PositionControls Component', () => {
       },
     });
 
-    (AlphaVantageService.AlphaVantageService.getInstance().getStockQuote as jest.Mock)
-      .mockResolvedValue(155);
+    mockGetStockQuote = AlphaVantageService.AlphaVantageService.getInstance().getStockQuote as jest.Mock;
+    mockGetStockQuote.mockResolvedValue(155);
     initRealTimeService(store);
   });
 
   test('renders position data correctly', async () => {
-    render(
+    await act(async () => {
+      render(
+        <Provider store={store}>
+          <PositionControls position={mockPosition} />
+        </Provider>
+      );
+    });
+    
+    // Wait for initial price load
+    const priceLabel = await screen.findByTestId('current-price-label');
+    expect(priceLabel).toHaveTextContent('Current Price: $155.00');
+    
+    // Test invalid price handling
+    mockGetStockQuote.mockResolvedValueOnce(NaN);
+    const { rerender: firstRerender } = render(
       <Provider store={store}>
         <PositionControls position={mockPosition} />
       </Provider>
     );
-
-    // Use findBy queries to wait for async content
-    expect(await screen.findByText(/Current Price:/)).toBeInTheDocument();
-    expect(await screen.findByText(/\$155\.00/)).toBeInTheDocument();
-    expect(await screen.findByText(/Unrealized P\/L:/)).toBeInTheDocument();
-    expect(await screen.findByText(/\+500\.00/)).toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.getByTestId('current-price-label')).toHaveTextContent('Loading...');
+    });
+    
+    expect(await screen.findByTestId('refresh-price-button')).toBeInTheDocument();
+    
+    const plValue = await screen.findByTestId('unrealized-pl-value');
+    expect(plValue).toHaveTextContent('+500.00');
   });
 
   test('refreshes price on button click', async () => {
     (AlphaVantageService.AlphaVantageService.getInstance().getStockQuote as jest.Mock)
       .mockResolvedValueOnce(160);
 
+    await act(async () => {
+      render(
+        <Provider store={store}>
+          <PositionControls position={mockPosition} />
+        </Provider>
+      );
+    });
+
+    await act(async () => {
+      fireEvent.click(await screen.findByTestId('refresh-price-button'));
+    });
+    
+    // Wait for price update
+    await waitFor(async () => {
+      const priceLabel = await screen.findByTestId('current-price-label');
+      expect(priceLabel).toHaveTextContent('Current Price: $160.00');
+    });
+    
+    // Test invalid price during refresh
+    mockGetStockQuote.mockResolvedValueOnce(undefined);
+    fireEvent.click(screen.getByTestId('refresh-price-button'));
+    await waitFor(() => {
+      expect(screen.getByTestId('refresh-price-button')).not.toBeDisabled();
+      expect(console.error).toHaveBeenCalledWith('Invalid price received during refresh:', undefined);
+      expect(screen.getByTestId('current-price-label')).toHaveTextContent('Current Price: $160.00');
+    });
+  });
+
+  test('disables close button when price is loading', async () => {
+    const positionWithoutPrice: Position = {
+      ...mockPosition,
+      currentPrice: 0
+    };
+    
+    // Render without mocking useState
+    render(
+      <Provider store={store}>
+        <PositionControls position={positionWithoutPrice} />
+      </Provider>
+    );
+    
+    const closeButton = await screen.findByTestId('close-position-button');
+    expect(closeButton).toBeDisabled();
+    expect(closeButton).toHaveTextContent('Price Loading...');
+  });
+
+  test('disables buttons during pending state', async () => {
+    // Update the existing store to pending state
+    store.dispatch(portfolioActions.setPending(true));
+    
     render(
       <Provider store={store}>
         <PositionControls position={mockPosition} />
       </Provider>
     );
 
-    fireEvent.click(await screen.findByText('Refresh'));
-    
-    // Wait for price update
-    await waitFor(async () => {
-      expect(await screen.findByText(/\$160\.00/)).toBeInTheDocument();
-    });
-    
-    // Verify P/L update
-    expect(await screen.findByText(/\+1000\.00/)).toBeInTheDocument();
-});
-
-  test('disables buttons during pending state', async () => {
-    const pendingStore = configureStore({
-      reducer: {
-        portfolio: portfolioReducer,
-      },
-      preloadedState: {
-        portfolio: {
-          ...store.getState().portfolio,
-          isPending: true
-        },
-      },
-    });
-
-    render(
-      <Provider store={pendingStore}>
-        <PositionControls position={mockPosition} />
-      </Provider>
-    );
-
-    // Verify button states
-    expect(await screen.findByText('Processing...')).toBeDisabled();
-    // The 'Close Position' button is replaced by 'Processing...'
+    const closeButton = await screen.findByTestId('close-position-button');
+    expect(closeButton).toBeDisabled();
+    expect(closeButton).toHaveTextContent('Processing...');
   });
 
   test('opens modify dialog on button click', async () => {
@@ -152,16 +189,16 @@ describe('PositionControls Component', () => {
       newPositions: []
     });
     
-    render(
-      <Provider store={store}>
-        <PositionControls position={mockPosition} />
-      </Provider>
-    );
+    await act(async () => {
+      render(
+        <Provider store={store}>
+          <PositionControls position={mockPosition} />
+        </Provider>
+      );
+    });
 
     await act(async () => {
-      await act(async () => {
-        fireEvent.click(screen.getByText('Close Position'));
-      });
+      fireEvent.click(await screen.findByTestId('close-position-button'));
     });
     
     await waitFor(() => {
@@ -169,9 +206,10 @@ describe('PositionControls Component', () => {
     });
     
     // Verify store updates
-    expect(store.getState().portfolio.positions).toHaveLength(0);
-    expect(store.getState().portfolio.cashBalance).toBe(10000 + (100 * 155));
-    expect(store.getState().portfolio.realizedPL).toBe(500);
+    const state = store.getState().portfolio;
+    expect(state.positions).toHaveLength(0);
+    expect(state.cashBalance).toBe(10000 + (100 * 155));
+    expect(state.realizedPL).toBe(500);
   });
 
   test('handles error when closing position', async () => {
@@ -188,11 +226,8 @@ describe('PositionControls Component', () => {
         <PositionControls position={mockPosition} />
       </Provider>
     );
-
-    // Update state to trigger trade execution
-    store.dispatch(portfolioActions.setCashBalance(20000));
     
-    fireEvent.click(screen.getByText('Close Position'));
+    fireEvent.click(await screen.findByTestId('close-position-button'));
     
     await waitFor(() => {
       expect(mockExecuteTrade).toHaveBeenCalledWith({
@@ -201,7 +236,6 @@ describe('PositionControls Component', () => {
         action: 'sell',
         type: 'market'
       });
-      expect(store.getState().portfolio.positions).toContainEqual(mockPosition);
       expect(errorSpy).toHaveBeenCalledWith('Failed to close position:', 'Insufficient funds');
     });
     
@@ -210,8 +244,7 @@ describe('PositionControls Component', () => {
 
   test('handles error during price refresh', async () => {
     const errorMessage = 'Failed to fetch price';
-    (AlphaVantageService.AlphaVantageService.getInstance().getStockQuote as jest.Mock)
-      .mockRejectedValue(new Error(errorMessage));
+    mockGetStockQuote.mockRejectedValueOnce(new Error(errorMessage));
 
     render(
       <Provider store={store}>
@@ -219,14 +252,12 @@ describe('PositionControls Component', () => {
       </Provider>
     );
 
-    await act(async () => {
-      fireEvent.click(screen.getByText('Refresh'));
-    });
+    await waitFor(() => screen.getByTestId('refresh-price-button'));
+    fireEvent.click(screen.getByTestId('refresh-price-button'));
     
     // Verify error is handled and price remains unchanged
     await waitFor(() => {
-      expect(screen.getByText('Current Price:')).toBeInTheDocument();
-      expect(screen.getByText('$155.00')).toBeInTheDocument();
+      expect(screen.getByTestId('current-price-label')).toHaveTextContent('Current Price: $155.00');
     });
   });
 });

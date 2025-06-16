@@ -15,7 +15,7 @@ interface PositionControlsProps {
 const PositionControls: React.FC<PositionControlsProps> = ({ position }) => {
   const dispatch: AppDispatch = useDispatch();
   const alphaVantageService = AlphaVantageService.getInstance();
-  const [currentPrice, setCurrentPrice] = useState(position.currentPrice);
+  const [currentPrice, setCurrentPrice] = useState<number | null>(null);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [showDialog, setShowDialog] = useState(false);
   const isPending = useSelector((state: RootState) => state.portfolio.isPending);
@@ -30,13 +30,21 @@ const PositionControls: React.FC<PositionControlsProps> = ({ position }) => {
     
     const fetchPrice = async () => {
       try {
+        setCurrentPrice(null); // Reset to loading state
         const price = await alphaVantageService.getStockQuote(position.symbol);
         if (isMounted) {
-          setCurrentPrice(price);
+          // Handle case where service returns undefined/invalid instead of throwing
+          if (typeof price === 'number' && !isNaN(price)) {
+            setCurrentPrice(price);
+          } else {
+            console.error('Invalid price received:', price);
+            setCurrentPrice(position.currentPrice); // Fallback to prop value
+          }
         }
       } catch (error) {
         if (isMounted) {
           console.error('Failed to fetch current price:', error);
+          setCurrentPrice(position.currentPrice); // Fallback to prop value
         }
       }
     };
@@ -46,11 +54,14 @@ const PositionControls: React.FC<PositionControlsProps> = ({ position }) => {
     return () => {
       isMounted = false;
     };
-  }, [position.symbol]);
+  }, [position.symbol, position.currentPrice]);
 
 
   const handleClosePosition = () => {
-    if (isPending) return;
+    if (isPending || currentPrice === null) {
+      console.error('Cannot close position: price not available');
+      return;
+    }
     
     dispatch(stockTradeThunk({
       symbol: position.symbol,
@@ -68,7 +79,13 @@ const PositionControls: React.FC<PositionControlsProps> = ({ position }) => {
     setIsRefreshing(true);
     try {
       const price = await alphaVantageService.getStockQuote(position.symbol);
-      setCurrentPrice(price);
+      // Handle case where service returns undefined/invalid
+      if (typeof price === 'number' && !isNaN(price)) {
+        setCurrentPrice(price);
+      } else {
+        console.error('Invalid price received during refresh:', price);
+        // Keep previous price value on refresh failure
+      }
     } catch (error) {
       console.error('Failed to refresh price:', error);
     } finally {
@@ -77,10 +94,18 @@ const PositionControls: React.FC<PositionControlsProps> = ({ position }) => {
   };
 
   return (
-    <div className="position-controls">
+    <div className="position-controls" data-testid="position-controls">
       <div className="price-display">
-        <span>Current Price: {currentPrice ? `$${currentPrice.toFixed(2)}` : 'Loading...'}</span>
-        <button onClick={handleRefreshPrice} disabled={isRefreshing}>
+        <span data-testid="current-price-label">
+          {typeof currentPrice === 'number'
+            ? `Current Price: $${currentPrice.toFixed(2)}`
+            : 'Loading...'}
+        </span>
+        <button
+          onClick={handleRefreshPrice}
+          disabled={isRefreshing}
+          data-testid="refresh-price-button"
+        >
           {isRefreshing ? 'Refreshing...' : 'Refresh'}
         </button>
       </div>
@@ -115,10 +140,11 @@ const PositionControls: React.FC<PositionControlsProps> = ({ position }) => {
         </button>
         <button
           onClick={handleClosePosition}
-          disabled={isPending}
+          disabled={isPending || currentPrice === null}
           className="close-button"
+          data-testid="close-position-button"
         >
-          {isPending ? 'Processing...' : 'Close Position'}
+          {isPending ? 'Processing...' : currentPrice === null ? 'Price Loading...' : 'Close Position'}
         </button>
       </div>
       
