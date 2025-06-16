@@ -7,6 +7,7 @@ export interface Position {
   id: string;
   symbol: string;
   type: 'call' | 'put' | 'stock';
+  positionType: 'long' | 'short'; // Added positionType field
   quantity: number;
   strike?: number;
   expiry?: string;
@@ -168,6 +169,9 @@ export const portfolioSlice = createSlice({
       state.lastSecondUpdates = 0;
       state.maxUpdatesPerSecond = 0;
       state.lastUpdateTime = Date.now();
+    },
+    setCashBalance: (state, action: PayloadAction<number>) => {
+      state.cashBalance = action.payload;
     }
   },
   extraReducers: (builder) => {
@@ -204,6 +208,10 @@ export const portfolioSlice = createSlice({
             existingPosition.purchasePrice =
               (totalCost + cost) / (existingPosition.quantity + leg.quantity);
             existingPosition.quantity = newQuantity;
+            // Preserve positionType when updating existing position
+            existingPosition.positionType = existingPosition.positionType;
+            // Preserve positionType when updating existing position
+            existingPosition.positionType = existingPosition.positionType;
           }
         } else if (leg.action === 'buy') {
           // Add new long position
@@ -211,6 +219,7 @@ export const portfolioSlice = createSlice({
             id: positionId,
             symbol: leg.symbol,
             type: leg.optionType,
+            positionType: 'long' as 'long', // Explicitly type as union type
             quantity: leg.quantity,
             strike: leg.strike,
             expiry: leg.expiry,
@@ -228,6 +237,7 @@ export const portfolioSlice = createSlice({
             id: positionId,
             symbol: leg.symbol,
             type: leg.optionType,
+            positionType: 'short' as 'short', // Explicitly type as union type
             quantity: -leg.quantity,
             strike: leg.strike,
             expiry: leg.expiry,
@@ -301,5 +311,5 @@ export const setupPriceListener = (dispatch: any) => {
 };
 
 export const portfolioActions = portfolioSlice.actions;
-export const { addPosition, updatePosition, updatePositionPrice, batchUpdatePositionPrices, modifyPosition, closePosition, updateMarginUsage, setPending, resetMetrics } = portfolioSlice.actions;
+export const { addPosition, updatePosition, updatePositionPrice, batchUpdatePositionPrices, modifyPosition, closePosition, updateMarginUsage, setPending, resetMetrics, setCashBalance } = portfolioSlice.actions;
 export default portfolioSlice.reducer;

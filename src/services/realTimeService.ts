@@ -347,6 +347,7 @@ export class RealTimeService {
         id: `mock-${symbols[Math.floor(Math.random() * symbols.length)]}`,
         symbol: symbols[Math.floor(Math.random() * symbols.length)],
         type: 'stock',
+        positionType: 'long',
         quantity: Math.floor(Math.random() * 100),
         purchasePrice: Math.random() * 300,
         currentPrice: Math.random() * 300,

@@ -47,12 +47,21 @@ export class TradeService {
         expiry: leg.expiry,
         purchasePrice: leg.premium,
         currentPrice: leg.premium,
-        unrealizedPL: 0
+        unrealizedPL: 0,
+        positionType: leg.action === 'buy' ? 'long' : 'short'
       }));
     });
     
     return margin;
   }
+static async executeStockTrade(trade: { symbol: string; quantity: number; action: 'buy' | 'sell'; type: 'market' }): Promise<void> {
+  try {
+    // Simple stock trade execution without margin calculations
+    await MockApiService.getInstance().executeStockTrade(trade);
+  } catch (error) {
+    throw new Error(`Stock trade execution failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+  }
+}
   
   private static validateLegs(legs: OptionLeg[], state: RootState): boolean {
     return legs.every(leg => {

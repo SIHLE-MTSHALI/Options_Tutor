@@ -39,7 +39,10 @@ const PortfolioSummary: React.FC = () => {
     <div className="portfolio-summary">
       <div className="header">
         <h2>Portfolio Summary</h2>
-        <div className={`connection-status ${connectionStatus ? 'connected' : 'disconnected'}`}>
+        <div
+          className={`connection-status ${connectionStatus ? 'connected' : 'disconnected'}`}
+          data-testid="connection-status-indicator"
+        >
           {connectionStatus ? '● Live' : '● Disconnected'}
         </div>
       </div>

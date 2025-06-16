@@ -3,7 +3,9 @@ import { useDispatch, useSelector } from 'react-redux';
 import { Position } from '../redux/portfolioSlice';
 import type { RootState } from '../redux/store';
 import { closePosition } from '../redux/portfolioSlice';
+import { stockTradeThunk } from '../redux/tradeThunks';
 import { AlphaVantageService } from '../services/AlphaVantageService';
+import type { AppDispatch } from '../redux/store';
 import { PositionModifyDialog } from './PositionModifyDialog';
 
 interface PositionControlsProps {
@@ -11,7 +13,7 @@ interface PositionControlsProps {
 }
 
 const PositionControls: React.FC<PositionControlsProps> = ({ position }) => {
-  const dispatch = useDispatch();
+  const dispatch: AppDispatch = useDispatch();
   const alphaVantageService = AlphaVantageService.getInstance();
   const [currentPrice, setCurrentPrice] = useState(position.currentPrice);
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -24,22 +26,42 @@ const PositionControls: React.FC<PositionControlsProps> = ({ position }) => {
 
   // Fetch current price on mount
   useEffect(() => {
+    let isMounted = true;
+    
     const fetchPrice = async () => {
       try {
         const price = await alphaVantageService.getStockQuote(position.symbol);
-        setCurrentPrice(price);
+        if (isMounted) {
+          setCurrentPrice(price);
+        }
       } catch (error) {
-        console.error('Failed to fetch current price:', error);
+        if (isMounted) {
+          console.error('Failed to fetch current price:', error);
+        }
       }
     };
-    
+
     fetchPrice();
+
+    return () => {
+      isMounted = false;
+    };
   }, [position.symbol]);
 
 
   const handleClosePosition = () => {
-    // Use current price for closing
-    dispatch(closePosition({ id: position.id, closePrice: currentPrice }));
+    if (isPending) return;
+    
+    dispatch(stockTradeThunk({
+      symbol: position.symbol,
+      quantity: position.quantity,
+      action: position.positionType === 'long' ? 'sell' : 'buy',
+      type: 'market'
+    })).then(() => {
+      dispatch(closePosition({ id: position.id, closePrice: currentPrice }));
+    }).catch((error: Error) => {
+      console.error('Failed to close position:', error);
+    });
   };
 
   const handleRefreshPrice = async () => {
@@ -65,7 +87,10 @@ const PositionControls: React.FC<PositionControlsProps> = ({ position }) => {
       
       <div className="pl-display">
         <span>Unrealized P/L:</span>
-        <span className={unrealizedPL >= 0 ? 'positive' : 'negative'}>
+        <span
+          className={unrealizedPL >= 0 ? 'positive' : 'negative'}
+          data-testid="unrealized-pl-value"
+        >
           {unrealizedPL >= 0 ? '+' : ''}{unrealizedPL.toFixed(2)}
         </span>
       </div>

@@ -38,6 +38,25 @@ export const executeTradeThunk = createAsyncThunk(
   }
 );
 
+export const stockTradeThunk = createAsyncThunk(
+  'trade/stockTrade',
+  async (trade: { symbol: string; quantity: number; action: 'buy' | 'sell'; type: 'market' }, { rejectWithValue }) => {
+    try {
+      // Simple stock trade execution
+      await TradeService.executeStockTrade(trade);
+      return trade;
+    } catch (error: unknown) {
+      let errorMessage = 'Stock trade execution failed';
+      if (typeof error === 'object' && error !== null && 'message' in error) {
+        errorMessage = (error as { message: string }).message;
+      } else if (typeof error === 'string') {
+        errorMessage = error;
+      }
+      return rejectWithValue(errorMessage);
+    }
+  }
+);
+
 /**
  * Fetch historical options data for a symbol and expiry
  * @param symbol Stock ticker symbol

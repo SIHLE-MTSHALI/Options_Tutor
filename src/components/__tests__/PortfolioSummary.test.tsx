@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, screen, fireEvent, within } from '@testing-library/react';
+import { render, screen, fireEvent, within, waitFor } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import { Provider } from 'react-redux';
 import PortfolioSummary from '../PortfolioSummary';
@@ -13,6 +13,7 @@ const mockPositions: Position[] = [
     id: '1',
     symbol: 'AAPL',
     type: 'stock',
+    positionType: 'long',
     quantity: 100,
     purchasePrice: 150,
     currentPrice: 155,
@@ -24,6 +25,7 @@ const mockPositions: Position[] = [
     id: '2',
     symbol: 'TSLA',
     type: 'stock',
+    positionType: 'long',
     quantity: 50,
     purchasePrice: 200,
     currentPrice: 220,
@@ -54,10 +56,12 @@ describe('PortfolioSummary Component', () => {
           lastSecondUpdates: 0,
           maxUpdatesPerSecond: 0,
           lastUpdateTime: Date.now(),
+          connectionStatus: 'disconnected', // Add explicit connection state
         },
       },
     });
-    initRealTimeService(store);
+    // Mock realTimeService instead of initializing
+    jest.spyOn(require('../../services/realTimeService'), 'initRealTimeService').mockImplementation(() => {});
   });
 
   test('renders portfolio summary with correct values', () => {
@@ -108,19 +112,20 @@ describe('PortfolioSummary Component', () => {
     expect(screen.getByText('Current Price: $220.00')).toBeInTheDocument();
   });
 
-  test('displays position controls and connection status', () => {
+  test('displays position controls and connection status', async () => {
     render(
       <Provider store={store}>
         <PortfolioSummary />
       </Provider>
     );
 
-    // Check connection status using test IDs
+    // Check connection status using existing test ID and text content
     const statusIndicator = screen.getByTestId('connection-status-indicator');
-    const statusText = screen.getByTestId('connection-status-text');
     
-    expect(statusIndicator).toHaveClass('disconnected');
-    expect(statusText).toHaveTextContent('Disconnected');
+    await waitFor(() => {
+      expect(statusIndicator).toHaveClass('disconnected');
+      expect(statusIndicator).toHaveTextContent('● Disconnected');
+    });
     
     // Check position controls
     expect(screen.getAllByText('Modify Position')).toHaveLength(2);

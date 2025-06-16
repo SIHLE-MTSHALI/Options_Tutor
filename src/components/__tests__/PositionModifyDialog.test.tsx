@@ -22,6 +22,7 @@ const mockPosition: Position = {
   purchasePrice: 150,
   currentPrice: 155,
   unrealizedPL: 0,
+  positionType: 'long',
 };
 
 describe('PositionModifyDialog Component', () => {

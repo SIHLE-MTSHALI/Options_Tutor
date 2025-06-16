@@ -24,6 +24,7 @@ describe('tradeThunks', () => {
     purchasePrice: 150,
     currentPrice: 155,
     unrealizedPL: 0,
+    positionType: 'long',
   };
 
   let actions: AnyAction[] = [];
@@ -105,6 +106,7 @@ describe('tradeThunks', () => {
           purchasePrice: 155,
           currentPrice: 155,
           unrealizedPL: 0,
+          positionType: 'long',
           optionDetails: {
             expiry: '2023-12-15',
             strike: 150,

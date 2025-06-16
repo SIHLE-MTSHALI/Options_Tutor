@@ -138,3 +138,10 @@ See [ISSUES.md](./ISSUES.md) for detailed failure analysis. Test regressions ind
 - Fixed failing test for tradeThunks error handling
 - Updated test to match actual thunk behavior (fulfilled action with error payload)
 - Added detailed debug logging to diagnose test failures
+
+### 2025-06-16
+- **Fixed**: Resolved issue with `DataFetchError` tests in `historicalDataService` by:
+  - Modifying `DataFetchError` to use an instance property `isDataFetchError` instead of static property
+  - Adding explicit `name = 'DataFetchError'` assignment in constructor
+  - Fixing prototype chain with `Object.setPrototypeOf()`
+  - Updating tests to check for `isDataFetchError` property and TypeScript error typing

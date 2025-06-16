@@ -64,4 +64,12 @@ export class MockApiService {
       }, 200);
     });
   }
+public async executeStockTrade(trade: { symbol: string; quantity: number; action: 'buy' | 'sell'; type: 'market' }): Promise<void> {
+  return new Promise(resolve => {
+    setTimeout(() => {
+      console.log(`Executed stock trade: ${trade.action} ${trade.quantity} shares of ${trade.symbol}`);
+      resolve();
+    }, 200);
+  });
+}
 }
