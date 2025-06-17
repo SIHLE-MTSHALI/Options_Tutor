@@ -107,9 +107,57 @@ gantt
 | Cross-broker rules | Abstract rule configuration |
 
 ## 5. Implementation Details
-- Completed on 2025-06-13
+- Core system completed on 2025-06-13
+- Extended for ETF strategies on 2025-06-17
 - Integrated MarginService into TradeService
 - Added stock quote fetching for underlying prices
 - Made trade execution async to support quote fetching
 - Added margin validation before trade execution
 - Updated tradeThunks to handle async execution flow
+
+## 6. ETF Strategy Margin Implementation
+### Status
+✅ Implemented and tested for all ETF strategies (MSTY, PLTY, TSLY)
+
+### Formulas
+- Covered calls: 0 margin required
+- Cash-secured puts: Strike * 100 * quantity
+- Collars: (Short call strike - Long put strike) * 100 * quantity * dividend risk factor
+
+### Test Results
+- ✅ MSTY Covered Call execution and margin
+- ✅ PLTY Cash-Secured Put execution and margin
+- ✅ TSLY Collar execution and margin
+- ✅ Prevent trade with insufficient buying power (TSLY collar)
+- ✅ Applies 1.5x dividend risk factor
+- ✅ Does not apply dividend risk factor for non-ETFs
+- ✅ Uses normal margin when dividend fetch fails
+- ✅ Early assignment risk detection
+
+### Risk Factors
+- Dividend risk factor: Applied only to ETFs
+- Factor = (daysToExDiv <= 5) ? 1.5 : 1.0
+- Early assignment warning when:
+  - Option is deep ITM (>= $0.50 for calls, <= $0.50 for puts)
+  - Days to expiry < 3
+
+## 7. Timeline
+```mermaid
+gantt
+    title Margin Implementation Timeline
+    dateFormat  YYYY-MM-DD
+    section Core Service
+    MarginService.ts       :done, 2025-06-13
+    section Redux
+    portfolioSlice.ts      :done, 2025-06-13
+    TradeService.ts        :done, 2025-06-13
+    section UI
+    OrderBuilder.tsx       :done, 2025-06-14
+    section Testing
+    Unit Tests             :done, 2025-06-15
+    Integration Tests      :done, 2025-06-15
+    section ETF Strategies
+    Margin Formulas        :done, 2025-06-17
+    Dividend Risk          :done, 2025-06-17
+    Test Cases             :done, 2025-06-17
+```

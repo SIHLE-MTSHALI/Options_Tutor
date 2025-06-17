@@ -72,4 +72,23 @@ public async executeStockTrade(trade: { symbol: string; quantity: number; action
     }, 200);
   });
 }
+
+public async fetchDividendData(symbol: string): Promise<{ amount: number; daysToExDiv: number }> {
+  // Mock dividend data for ETFs
+  const dividendMap: Record<string, { amount: number; daysToExDiv: number }> = {
+    TSLY: { amount: 0.50, daysToExDiv: 3 },
+    MSTY: { amount: 0.45, daysToExDiv: 5 },
+    PLTY: { amount: 0.40, daysToExDiv: 7 }
+  };
+
+  return new Promise(resolve => {
+    setTimeout(() => {
+      if (dividendMap[symbol]) {
+        resolve(dividendMap[symbol]);
+      } else {
+        resolve({ amount: 0, daysToExDiv: 0 });
+      }
+    }, 200);
+  });
+}
 }

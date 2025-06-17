@@ -1,17 +1,17 @@
-import { createSlice, PayloadAction, createAsyncThunk } from '@reduxjs/toolkit';
+import { createSlice, PayloadAction, createAsyncThunk, Draft } from '@reduxjs/toolkit';
 import { RootState } from './store';
+import { ETFStrategyConfig } from './types';
 
 export interface OptionLeg {
-  id: string;
+  id?: string; // Make optional
   optionType: 'call' | 'put';
   symbol: string;
-  contractId: string;
+  contractId?: string; // Make optional
   action: 'buy' | 'sell';
   strike: number;
   expiry: string;
   quantity: number;
-  premium: number;
-  type: 'call' | 'put'; // Added type property
+  premium?: number; // Make optional
 }
 
 interface Strategy {
@@ -44,6 +44,18 @@ export const tradingSlice = createSlice({
   name: 'trading',
   initialState,
   reducers: {
+    setCustomStrategy: (state: Draft<TradingState>, action: PayloadAction<ETFStrategyConfig>) => {
+      state.legs = action.payload.legs;
+      state.selectedStrategy = {
+        id: 'custom',
+        name: action.payload.name,
+        legs: action.payload.legs,
+        maxProfit: 0,
+        maxLoss: 0,
+        breakEvenPoints: [],
+        probabilityOfProfit: 0
+      };
+    },
     addLeg: (state, action: PayloadAction<OptionLeg>) => {
       state.legs.push(action.payload);
     },
@@ -66,7 +78,7 @@ export const tradingSlice = createSlice({
     toggleRiskGraph: (state) => {
       state.showRiskGraph = !state.showRiskGraph;
     },
-    executeTrade: (state, action: PayloadAction<{ legs: OptionLeg[]; marginUsed: number; status: string }>) => {
+    executeTrade: (state, action: PayloadAction<{ legs: OptionLeg[]; marginUsed: number; status: string; strategy?: string }>) => {
       state.legs = [];
       state.selectedStrategy = null;
       state.tradeError = null;
@@ -85,7 +97,8 @@ export const {
   togglePayoffDiagram,
   toggleRiskGraph,
   executeTrade,
-  setTradeError
+  setTradeError,
+  setCustomStrategy
 } = tradingSlice.actions;
 
 export const executeTradeThunk = createAsyncThunk(

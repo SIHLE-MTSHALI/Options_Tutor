@@ -21,7 +21,6 @@ describe('TradeService Integration Tests', () => {
     strike: 150,
     expiry: '2023-12-15',
     optionType: 'call',
-    type: 'call',
     action: 'buy',
     quantity: 1,
     premium: 2.5

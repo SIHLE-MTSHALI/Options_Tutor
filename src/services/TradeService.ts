@@ -6,7 +6,37 @@ import { MarginService } from './MarginService';
 import { MockApiService } from './mockApiService'; // Added
 
 export class TradeService {
-  static async executeTrade(legs: OptionLeg[], getState: () => RootState, dispatch: any) { // Made async
+  static async executeTrade(legs: OptionLeg[], getState: () => RootState, dispatch: any) {
+    return this._executeTradeCore(legs, getState, dispatch, async (legs, price) =>
+      MarginService.calculateMargin(legs, price)
+    );
+  }
+
+  static async executeETFTrade(etfSymbol: string, legs: OptionLeg[], getState: () => RootState, dispatch: any) {
+    return this._executeTradeCore(legs, getState, dispatch, async (legs, price) => {
+      try {
+        const dividendData = await MockApiService.getInstance().fetchDividendData(etfSymbol);
+        return MarginService.calculateETFMargin(
+          etfSymbol,
+          legs,
+          price,
+          dividendData.amount,
+          dividendData.daysToExDiv
+        );
+      } catch (e) {
+        console.error(`Failed to fetch dividend data for ${etfSymbol}, using default values`);
+        return MarginService.calculateETFMargin(etfSymbol, legs, price, 0, 0);
+      }
+    });
+  }
+
+  private static async _executeTradeCore(
+    legs: OptionLeg[],
+    getState: () => RootState,
+    dispatch: any,
+    marginCalculator: (legs: OptionLeg[], price: number) => Promise<number>
+    // Now handles both ETF and non-ETF margin calculations asynchronously
+  ) {
     const state = getState();
     
     // Validate all legs
@@ -16,24 +46,25 @@ export class TradeService {
     
     // Get underlying price (assuming all legs for same symbol)
     const symbol = legs[0].symbol;
-    let underlyingPrice = state.marketData.stockQuotes[symbol]?.price; // Changed to let
+    let underlyingPrice = state.marketData.stockQuotes[symbol]?.price;
     
     if (!underlyingPrice) {
       try {
-        const quote = await MockApiService.getInstance().fetchStockQuote(symbol); // Use singleton
+        const quote = await MockApiService.getInstance().fetchStockQuote(symbol);
         underlyingPrice = quote.price;
-        dispatch(updateStockQuote({symbol, price: quote.price})); // Dispatch update
+        dispatch(updateStockQuote({symbol, price: quote.price}));
       } catch (e) {
         throw new Error(`Failed to fetch stock quote for ${symbol}`);
       }
     }
     
-    // Calculate required margin using MarginService
-    const margin = MarginService.calculateMargin(legs, underlyingPrice);
+    // Calculate required margin (now async)
+    const margin = await marginCalculator(legs, underlyingPrice);
+    console.log(`[DEBUG] Margin required: ${margin}, cash balance: ${state.portfolio.cashBalance}`);
     
-    // Check buying power
+    // Ensure we have enough buying power for the trade
     if (margin > state.portfolio.cashBalance) {
-      throw new Error('Insufficient buying power');
+      throw new Error('Insufficient buying power for trade');
     }
     
     // Execute each leg
@@ -45,8 +76,8 @@ export class TradeService {
         quantity: leg.action === 'buy' ? leg.quantity : -leg.quantity,
         strike: leg.strike,
         expiry: leg.expiry,
-        purchasePrice: leg.premium,
-        currentPrice: leg.premium,
+        purchasePrice: leg.premium || 0,  // Default to 0 if premium not provided
+        currentPrice: leg.premium || 0,    // Default to 0 if premium not provided
         unrealizedPL: 0,
         positionType: leg.action === 'buy' ? 'long' : 'short'
       }));
@@ -54,7 +85,8 @@ export class TradeService {
     
     return margin;
   }
-static async executeStockTrade(trade: { symbol: string; quantity: number; action: 'buy' | 'sell'; type: 'market' }): Promise<void> {
+
+  static async executeStockTrade(trade: { symbol: string; quantity: number; action: 'buy' | 'sell'; type: 'market' }): Promise<void> {
   try {
     // Simple stock trade execution without margin calculations
     await MockApiService.getInstance().executeStockTrade(trade);
@@ -73,7 +105,31 @@ static async executeStockTrade(trade: { symbol: string; quantity: number; action
       
       // Check calls or puts based on option type
       const optionsArray = leg.optionType === 'call' ? expiryData.calls : expiryData.puts;
-      return !!optionsArray.find(option => option.strike === leg.strike);
+      const optionExists = !!optionsArray.find(option => option.strike === leg.strike);
+      
+      // Early assignment check for ETFs
+      if (optionExists && ['MSTY', 'PLTY', 'TSLY'].includes(leg.symbol)) {
+        this.handleEarlyAssignmentRisk(leg, state);
+      }
+      
+      return optionExists;
     });
+  }
+  
+  private static handleEarlyAssignmentRisk(leg: OptionLeg, state: RootState) {
+    // Check if option is deep in the money and near expiration
+    const quote = state.marketData.stockQuotes[leg.symbol];
+    if (!quote) return;
+    
+    const isDeepITM =
+      (leg.optionType === 'call' && quote.price > leg.strike * 1.1) ||
+      (leg.optionType === 'put' && quote.price < leg.strike * 0.9);
+    
+    const daysToExpiry = (new Date(leg.expiry).getTime() - Date.now()) / (1000 * 60 * 60 * 24);
+    
+    if (isDeepITM && daysToExpiry < 3) {
+      console.warn(`Early assignment risk for ${leg.symbol} ${leg.optionType} ${leg.strike}`);
+      // In a real system, we would trigger a notification or mitigation strategy
+    }
   }
 }

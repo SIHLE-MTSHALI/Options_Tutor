@@ -182,7 +182,8 @@ export const portfolioSlice = createSlice({
         const positionId = `${leg.symbol}-${leg.contractId}`;
         const existingPosition = state.positions.find(p => p.id === positionId);
         
-        const cost = leg.quantity * leg.premium;
+        const premium = leg.premium || 0;
+        const cost = leg.quantity * premium;
         const multiplier = leg.action === 'buy' ? -1 : 1;
         
         // Update cash balance (buy reduces cash, sell increases)
@@ -223,8 +224,8 @@ export const portfolioSlice = createSlice({
             quantity: leg.quantity,
             strike: leg.strike,
             expiry: leg.expiry,
-            purchasePrice: leg.premium,
-            currentPrice: leg.premium,
+            purchasePrice: premium,
+            currentPrice: premium,
             unrealizedPL: 0
           };
           state.positions.push(newPosition);
@@ -241,8 +242,8 @@ export const portfolioSlice = createSlice({
             quantity: -leg.quantity,
             strike: leg.strike,
             expiry: leg.expiry,
-            purchasePrice: leg.premium,
-            currentPrice: leg.premium,
+            purchasePrice: premium,
+            currentPrice: premium,
             unrealizedPL: 0
           };
           state.positions.push(newPosition);

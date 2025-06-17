@@ -127,8 +127,7 @@ describe('tradeThunks', () => {
       premium: 155,
       expiry: '2023-12-15',
       strike: 150,
-      optionType: 'call',
-      type: 'call'
+      optionType: 'call'
     }];
 
     console.log('[DEBUG] Dispatching executeTradeThunk');
@@ -171,8 +170,7 @@ describe('tradeThunks', () => {
       premium: 155,
       expiry: '2023-12-15',
       strike: 150,
-      optionType: 'call',
-      type: 'call'
+      optionType: 'call'
     }];
 
     console.log('[DEBUG] Dispatching executeTradeThunk with insufficient funds');
