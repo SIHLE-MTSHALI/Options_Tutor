@@ -7,7 +7,7 @@ export interface Position {
   id: string;
   symbol: string;
   type: 'call' | 'put' | 'stock';
-  positionType: 'long' | 'short'; // Added positionType field
+  positionType: 'long' | 'short';
   quantity: number;
   strike?: number;
   expiry?: string;
@@ -17,6 +17,7 @@ export interface Position {
   takeProfit?: number;
   unrealizedPL: number;
   lastUpdated?: string;
+  strategyId?: string; // Added to track ETF strategy association
 }
 
 interface PortfolioState {
@@ -32,6 +33,7 @@ interface PortfolioState {
   lastSecondUpdates: number;
   maxUpdatesPerSecond: number;
   lastUpdateTime: number;
+  strategyProfitLoss: { [strategyId: string]: number }; // Track P/L per strategy
 }
 
 const initialState: PortfolioState = {
@@ -46,6 +48,7 @@ const initialState: PortfolioState = {
   lastSecondUpdates: 0,
   maxUpdatesPerSecond: 0,
   lastUpdateTime: Date.now(),
+  strategyProfitLoss: {}, // Initialize empty strategy P/L tracker
 };
 
 // Helper to calculate position P&L
@@ -71,12 +74,21 @@ export const portfolioSlice = createSlice({
       
       // Update portfolio P&L
       state.unrealizedPL = calculatePortfolioPL(state.positions);
+      if (position.strategyId) {
+        state.strategyProfitLoss[position.strategyId] =
+          (state.strategyProfitLoss[position.strategyId] || 0) + position.unrealizedPL;
+      }
     },
     updatePosition: (state, action: PayloadAction<Position>) => {
       const index = state.positions.findIndex(p => p.id === action.payload.id);
       if (index !== -1) {
         state.positions[index] = action.payload;
         state.unrealizedPL = calculatePortfolioPL(state.positions);
+        if (state.positions[index].strategyId) {
+          state.strategyProfitLoss[state.positions[index].strategyId] =
+            (state.strategyProfitLoss[state.positions[index].strategyId] || 0) +
+            (action.payload.unrealizedPL - state.positions[index].unrealizedPL);
+        }
       }
     },
     updatePositionPrice: (state, action: PayloadAction<{ symbol: string; price: number; timestamp: number }>) => {
@@ -84,9 +96,18 @@ export const portfolioSlice = createSlice({
       
       state.positions.forEach(position => {
         if (position.symbol === symbol) {
+          // Capture previous PL before updating
+          const previousPL = position.unrealizedPL;
           position.currentPrice = price;
           position.unrealizedPL = calculatePositionPL(position);
           position.lastUpdated = new Date(timestamp).toISOString();
+          
+          // Update strategy P/L with actual change
+          if (position.strategyId) {
+            const plChange = position.unrealizedPL - previousPL;
+            state.strategyProfitLoss[position.strategyId] =
+              (state.strategyProfitLoss[position.strategyId] || 0) + plChange;
+          }
         }
       });
       
@@ -101,9 +122,18 @@ export const portfolioSlice = createSlice({
       updates.forEach(update => {
         state.positions.forEach(position => {
           if (position.symbol === update.symbol) {
+            // Capture previous PL before updating
+            const previousPL = position.unrealizedPL;
             position.currentPrice = update.price;
             position.unrealizedPL = calculatePositionPL(position);
             position.lastUpdated = new Date(update.timestamp).toISOString();
+            
+            // Update strategy P/L with actual change
+            if (position.strategyId) {
+              const plChange = position.unrealizedPL - previousPL;
+              state.strategyProfitLoss[position.strategyId] =
+                (state.strategyProfitLoss[position.strategyId] || 0) + plChange;
+            }
           }
         });
       });
@@ -154,6 +184,13 @@ export const portfolioSlice = createSlice({
         
         // Update portfolio P&L
         state.unrealizedPL = calculatePortfolioPL(state.positions);
+        if (position.strategyId) {
+          // Remove strategy P/L if this was the last position
+          const hasOtherStrategyPositions = state.positions.some(p => p.strategyId === position.strategyId);
+          if (!hasOtherStrategyPositions) {
+            delete state.strategyProfitLoss[position.strategyId];
+          }
+        }
       }
       state.isPending = false;
     },
@@ -255,6 +292,15 @@ export const portfolioSlice = createSlice({
       
       // Update portfolio P&L
       state.unrealizedPL = calculatePortfolioPL(state.positions);
+      // Update strategy P/L for new positions
+      legs.forEach(leg => {
+        const positionId = `${leg.symbol}-${leg.contractId}`;
+        const position = state.positions.find(p => p.id === positionId);
+        if (position && position.strategyId) {
+          state.strategyProfitLoss[position.strategyId] =
+            (state.strategyProfitLoss[position.strategyId] || 0) + position.unrealizedPL;
+        }
+      });
     });
   }
 });
@@ -313,4 +359,10 @@ export const setupPriceListener = (dispatch: any) => {
 
 export const portfolioActions = portfolioSlice.actions;
 export const { addPosition, updatePosition, updatePositionPrice, batchUpdatePositionPrices, modifyPosition, closePosition, updateMarginUsage, setPending, resetMetrics, setCashBalance } = portfolioSlice.actions;
+
+// Helper to calculate profit/loss for a position including strategy context
+export const calculatePositionProfitLoss = async (position: Position): Promise<number> => {
+  // For now, use existing calculation - will be enhanced with strategy-specific logic
+  return calculatePositionPL(position);
+};
 export default portfolioSlice.reducer;

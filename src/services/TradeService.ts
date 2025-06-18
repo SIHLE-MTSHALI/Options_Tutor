@@ -2,6 +2,7 @@ import { RootState } from '../redux/store';
 import { addPosition } from '../redux/portfolioSlice';
 import { updateStockQuote } from '../redux/marketDataSlice'; // Added
 import { OptionLeg } from '../redux/tradingSlice';
+import { Position } from '../redux/types';
 import { MarginService } from './MarginService';
 import { MockApiService } from './mockApiService'; // Added
 
@@ -28,6 +29,105 @@ export class TradeService {
         return MarginService.calculateETFMargin(etfSymbol, legs, price, 0, 0);
       }
     });
+  }
+
+  static async executeCoveredCallStrategy(
+    etfSymbol: string,
+    callStrike: number,
+    expiry: string,
+    quantity: number,
+    getState: () => RootState,
+    dispatch: any
+  ): Promise<number> {
+    const legs: OptionLeg[] = [{
+      symbol: etfSymbol,
+      action: 'sell',
+      quantity,
+      optionType: 'call',
+      strike: callStrike,
+      expiry,
+      premium: 0 // Will be fetched from market data
+    }];
+    const margin = await this.executeETFTrade(etfSymbol, legs, getState, dispatch);
+    
+    // Calculate and log margin utilization
+    const cashBalance = getState().portfolio.cashBalance;
+    const { utilization, status } = MarginService.calculateMarginUtilization(margin, cashBalance);
+    if (status !== 'safe') {
+      console.warn(`Covered call strategy for ${etfSymbol} margin utilization: ${utilization.toFixed(2)}% (${status})`);
+    }
+    
+    return margin;
+  }
+
+  static async executePutSellingStrategy(
+    etfSymbol: string,
+    putStrike: number,
+    expiry: string,
+    quantity: number,
+    getState: () => RootState,
+    dispatch: any
+  ): Promise<number> {
+    const legs: OptionLeg[] = [{
+      symbol: etfSymbol,
+      action: 'sell',
+      quantity,
+      optionType: 'put',
+      strike: putStrike,
+      expiry,
+      premium: 0 // Will be fetched from market data
+    }];
+    const margin = await this.executeETFTrade(etfSymbol, legs, getState, dispatch);
+    
+    // Calculate and log margin utilization
+    const cashBalance = getState().portfolio.cashBalance;
+    const { utilization, status } = MarginService.calculateMarginUtilization(margin, cashBalance);
+    if (status !== 'safe') {
+      console.warn(`Put selling strategy for ${etfSymbol} margin utilization: ${utilization.toFixed(2)}% (${status})`);
+    }
+    
+    return margin;
+  }
+
+  static async executeCollarStrategy(
+    etfSymbol: string,
+    callStrike: number,
+    putStrike: number,
+    expiry: string,
+    quantity: number,
+    getState: () => RootState,
+    dispatch: any
+  ): Promise<number> {
+    const legs: OptionLeg[] = [
+      {
+        symbol: etfSymbol,
+        action: 'buy',
+        quantity,
+        optionType: 'put',
+        strike: putStrike,
+        expiry,
+        premium: 0
+      },
+      {
+        symbol: etfSymbol,
+        action: 'sell',
+        quantity,
+        optionType: 'call',
+        strike: callStrike,
+        expiry,
+        premium: 0
+      }
+    ];
+    const margin = await this.executeETFTrade(etfSymbol, legs, getState, dispatch);
+    
+    // Calculate and log margin utilization
+    const cashBalance = getState().portfolio.cashBalance;
+    const { utilization, status } = MarginService.calculateMarginUtilization(margin, cashBalance);
+    if (status !== 'safe') {
+      console.warn(`Collar strategy for ${etfSymbol} margin utilization: ${utilization.toFixed(2)}% (${status})`);
+    }
+    
+    return margin;
   }
 
   private static async _executeTradeCore(
@@ -69,6 +169,11 @@ export class TradeService {
     
     // Execute each leg
     legs.forEach(leg => {
+      // Ensure required fields are present
+      if (!leg.optionType || leg.strike === undefined || !leg.expiry) {
+        throw new Error(`Invalid leg data: ${JSON.stringify(leg)}`);
+      }
+
       dispatch(addPosition({
         id: `${leg.id}-${Date.now()}`,
         symbol: symbol,
@@ -100,6 +205,12 @@ export class TradeService {
       const chain = state.marketData.optionChains[leg.symbol];
       if (!chain) return false;
       
+      // Validate required fields before proceeding
+      if (!leg.expiry || leg.strike === undefined) {
+        console.error(`Missing required fields for leg: ${JSON.stringify(leg)}`);
+        return false;
+      }
+
       const expiryData = chain[leg.expiry];
       if (!expiryData) return false;
       
@@ -121,15 +232,70 @@ export class TradeService {
     const quote = state.marketData.stockQuotes[leg.symbol];
     if (!quote) return;
     
+    // Validate required fields before proceeding
+    if (!leg.optionType || leg.strike === undefined || !leg.expiry) {
+      console.error(`Invalid leg data: ${JSON.stringify(leg)}`);
+      return;
+    }
+
+    const expiryDate = new Date(leg.expiry);
+    if (isNaN(expiryDate.getTime())) {
+      console.error(`Invalid expiry date: ${leg.expiry}`);
+      return;
+    }
+    
     const isDeepITM =
       (leg.optionType === 'call' && quote.price > leg.strike * 1.1) ||
       (leg.optionType === 'put' && quote.price < leg.strike * 0.9);
-    
-    const daysToExpiry = (new Date(leg.expiry).getTime() - Date.now()) / (1000 * 60 * 60 * 24);
+      
+    const daysToExpiry = (expiryDate.getTime() - Date.now()) / (1000 * 60 * 60 * 24);
     
     if (isDeepITM && daysToExpiry < 3) {
       console.warn(`Early assignment risk for ${leg.symbol} ${leg.optionType} ${leg.strike}`);
       // In a real system, we would trigger a notification or mitigation strategy
     }
+  }
+  static async closePosition(positionId: string, accountId: string): Promise<void> {
+    console.log(`Closing position ${positionId} for account ${accountId}`);
+    // In a real implementation, this would call a brokerage API
+    return new Promise((resolve) => setTimeout(resolve, 1000));
+  }
+
+  static async modifyPosition(positionId: string, stopLoss: number | undefined, takeProfit: number | undefined, accountId: string): Promise<void> {
+    console.log(`Modifying position ${positionId} for account ${accountId}:`, { stopLoss, takeProfit });
+    // In a real implementation, this would call a brokerage API
+    return new Promise((resolve) => setTimeout(resolve, 1000));
+  }
+
+  static async rollPosition(positionId: string, newExpiry: string, newStrike: number, accountId: string): Promise<void> {
+    console.log(`Rolling position ${positionId} for account ${accountId} to ${newExpiry} ${newStrike}`);
+    // In a real implementation, this would call a brokerage API
+    return new Promise((resolve) => setTimeout(resolve, 1000));
+  }
+
+  static validatePositionModification(
+    position: Position,
+    newStopLoss: number | null,
+    newTakeProfit: number | null,
+    accountMargin: number
+  ): string | null {
+    // Validate stopLoss/takeProfit values
+    if (newStopLoss !== null && newStopLoss >= position.currentPrice) {
+      return 'Stop loss must be below current price';
+    }
+    
+    if (newTakeProfit !== null && newTakeProfit <= position.currentPrice) {
+      return 'Take profit must be above current price';
+    }
+
+    // Calculate potential max loss
+    const maxLoss = MarginService.calculateMaxLoss(position, newStopLoss);
+    
+    // Check against account margin
+    if (maxLoss > accountMargin * 0.5) {
+      return 'Modification would exceed 50% of available margin';
+    }
+
+    return null;
   }
 }

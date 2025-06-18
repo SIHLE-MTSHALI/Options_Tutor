@@ -3,15 +3,15 @@ import { RootState } from './store';
 import { ETFStrategyConfig } from './types';
 
 export interface OptionLeg {
-  id?: string; // Make optional
-  optionType: 'call' | 'put';
+  id?: string;
   symbol: string;
-  contractId?: string; // Make optional
-  action: 'buy' | 'sell';
-  strike: number;
-  expiry: string;
   quantity: number;
-  premium?: number; // Make optional
+  action: 'buy' | 'sell';
+  optionType?: 'call' | 'put';
+  strike?: number;
+  expiry?: string;
+  contractId?: string;
+  premium?: number;
 }
 
 interface Strategy {
@@ -30,6 +30,7 @@ interface TradingState {
   showPayoffDiagram: boolean;
   showRiskGraph: boolean;
   tradeError: string | null;
+  accountId: string;
 }
 
 const initialState: TradingState = {
@@ -38,6 +39,7 @@ const initialState: TradingState = {
   showPayoffDiagram: true,
   showRiskGraph: false,
   tradeError: null,
+  accountId: '',
 };
 
 export const tradingSlice = createSlice({
@@ -100,6 +102,18 @@ export const {
   setTradeError,
   setCustomStrategy
 } = tradingSlice.actions;
+
+export const tradingActions = {
+  addLeg,
+  removeLeg,
+  updateLeg,
+  selectStrategy,
+  togglePayoffDiagram,
+  toggleRiskGraph,
+  executeTrade,
+  setTradeError,
+  setCustomStrategy
+};
 
 export const executeTradeThunk = createAsyncThunk(
   'trading/executeTrade',

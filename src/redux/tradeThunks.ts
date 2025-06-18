@@ -57,6 +57,33 @@ export const stockTradeThunk = createAsyncThunk(
   }
 );
 
+export const closePosition = createAsyncThunk(
+  'trading/closePosition',
+  async (positionId: string, { getState }) => {
+    const state = getState() as RootState;
+    await TradeService.closePosition(positionId, state.trading.accountId);
+    return positionId;
+  }
+);
+
+export const modifyPosition = createAsyncThunk(
+  'trading/modifyPosition',
+  async ({ positionId, stopLoss, takeProfit }: { positionId: string; stopLoss?: number; takeProfit?: number }, { getState }) => {
+    const state = getState() as RootState;
+    await TradeService.modifyPosition(positionId, stopLoss, takeProfit, state.trading.accountId);
+    return { positionId, stopLoss, takeProfit };
+  }
+);
+
+export const rollPosition = createAsyncThunk(
+  'trading/rollPosition',
+  async ({ positionId, newExpiry, newStrike }: { positionId: string; newExpiry: string; newStrike: number }, { getState }) => {
+    const state = getState() as RootState;
+    await TradeService.rollPosition(positionId, newExpiry, newStrike, state.trading.accountId);
+    return { positionId, newExpiry, newStrike };
+  }
+);
+
 /**
  * Fetch historical options data for a symbol and expiry
  * @param symbol Stock ticker symbol

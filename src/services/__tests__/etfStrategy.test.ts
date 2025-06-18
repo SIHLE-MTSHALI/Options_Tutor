@@ -391,4 +391,77 @@ describe('ETF Strategy Integration Tests', () => {
       TradeService.executeETFTrade('TSLY', legs, getMockState, jest.fn())
     ).rejects.toThrow('Insufficient buying power for trade');
   });
+
+  // Margin utilization warning tests
+  test('Covered call strategy logs margin utilization warnings', async () => {
+    // Mock console.warn to track calls
+    const warnSpy = jest.spyOn(console, 'warn').mockImplementation();
+    
+    // Set up state for different utilization scenarios
+    mockState.portfolio.cashBalance = 5000;
+
+    // Safe scenario (40% utilization)
+    jest.spyOn(TradeService, 'executeETFTrade').mockResolvedValue(2000);
+    await TradeService.executeCoveredCallStrategy('MSTY', 50, '2025-07-18', 1, getMockState, jest.fn());
+    expect(warnSpy).not.toHaveBeenCalled();
+
+    // Amber scenario (60% utilization)
+    jest.spyOn(TradeService, 'executeETFTrade').mockResolvedValue(3000);
+    await TradeService.executeCoveredCallStrategy('MSTY', 50, '2025-07-18', 1, getMockState, jest.fn());
+    expect(warnSpy).toHaveBeenCalledWith('Covered call strategy for MSTY margin utilization: 60.00% (amber)');
+    warnSpy.mockClear();
+
+    // Red scenario (80% utilization)
+    jest.spyOn(TradeService, 'executeETFTrade').mockResolvedValue(4000);
+    await TradeService.executeCoveredCallStrategy('MSTY', 50, '2025-07-18', 1, getMockState, jest.fn());
+    expect(warnSpy).toHaveBeenCalledWith('Covered call strategy for MSTY margin utilization: 80.00% (red)');
+  });
+
+  test('Put selling strategy logs margin utilization warnings', async () => {
+    // Mock console.warn to track calls
+    const warnSpy = jest.spyOn(console, 'warn').mockImplementation();
+    
+    // Set up state for different utilization scenarios
+    mockState.portfolio.cashBalance = 5000;
+
+    // Safe scenario (40% utilization)
+    jest.spyOn(TradeService, 'executeETFTrade').mockResolvedValue(2000);
+    await TradeService.executePutSellingStrategy('PLTY', 30, '2025-07-18', 1, getMockState, jest.fn());
+    expect(warnSpy).not.toHaveBeenCalled();
+
+    // Amber scenario (60% utilization)
+    jest.spyOn(TradeService, 'executeETFTrade').mockResolvedValue(3000);
+    await TradeService.executePutSellingStrategy('PLTY', 30, '2025-07-18', 1, getMockState, jest.fn());
+    expect(warnSpy).toHaveBeenCalledWith('Put selling strategy for PLTY margin utilization: 60.00% (amber)');
+    warnSpy.mockClear();
+
+    // Red scenario (80% utilization)
+    jest.spyOn(TradeService, 'executeETFTrade').mockResolvedValue(4000);
+    await TradeService.executePutSellingStrategy('PLTY', 30, '2025-07-18', 1, getMockState, jest.fn());
+    expect(warnSpy).toHaveBeenCalledWith('Put selling strategy for PLTY margin utilization: 80.00% (red)');
+  });
+
+  test('Collar strategy logs margin utilization warnings', async () => {
+    // Mock console.warn to track calls
+    const warnSpy = jest.spyOn(console, 'warn').mockImplementation();
+    
+    // Set up state for different utilization scenarios
+    mockState.portfolio.cashBalance = 5000;
+
+    // Safe scenario (40% utilization)
+    jest.spyOn(TradeService, 'executeETFTrade').mockResolvedValue(2000);
+    await TradeService.executeCollarStrategy('TSLY', 30, 20, '2025-07-18', 1, getMockState, jest.fn());
+    expect(warnSpy).not.toHaveBeenCalled();
+
+    // Amber scenario (60% utilization)
+    jest.spyOn(TradeService, 'executeETFTrade').mockResolvedValue(3000);
+    await TradeService.executeCollarStrategy('TSLY', 30, 20, '2025-07-18', 1, getMockState, jest.fn());
+    expect(warnSpy).toHaveBeenCalledWith('Collar strategy for TSLY margin utilization: 60.00% (amber)');
+    warnSpy.mockClear();
+
+    // Red scenario (80% utilization)
+    jest.spyOn(TradeService, 'executeETFTrade').mockResolvedValue(4000);
+    await TradeService.executeCollarStrategy('TSLY', 30, 20, '2025-07-18', 1, getMockState, jest.fn());
+    expect(warnSpy).toHaveBeenCalledWith('Collar strategy for TSLY margin utilization: 80.00% (red)');
+  });
 });

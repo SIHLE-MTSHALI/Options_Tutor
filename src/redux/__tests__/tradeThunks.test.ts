@@ -78,6 +78,7 @@ describe('tradeThunks', () => {
           lastSecondUpdates: 0,
           maxUpdatesPerSecond: 0,
           lastUpdateTime: Date.now(),
+          strategyProfitLoss: {} // Added to match updated PortfolioState
         }
       },
       middleware

@@ -3,6 +3,7 @@
  * Implements Reg T margin rules
  */
 import { OptionLeg } from '../redux/tradingSlice';
+import { Position } from '../redux/types';
 
 export class MarginService {
   /**
@@ -126,8 +127,6 @@ export class MarginService {
           // Apply dividend risk factor to the entire margin requirement
           margin = baseMargin * dividendRiskFactor;
           
-          // Additional risk metrics (unchanged)
-          
           // Risk metrics
           const delta = (shortCall.strike - stockPrice) / stockPrice;
           const gamma = 0.05; // Simplified gamma calculation
@@ -138,6 +137,7 @@ export class MarginService {
           if (dividendRiskFactor > 1) {
             console.warn(`Dividend risk: TSLY $${dividendAmount} dividend in ${daysToExDiv} days - applying ${dividendRiskFactor}x margin factor`);
           }
+        
         }
         break;
       }
@@ -154,5 +154,79 @@ export class MarginService {
     }
     
     return margin;
+  }
+
+  /**
+   * Calculate maximum potential loss for a position with a given stop loss
+   * @param position The position to calculate max loss for
+   * @param newStopLoss The proposed stop loss price (null if removing stop loss)
+   * @returns Maximum potential loss in USD
+   */
+  static calculateMaxLoss(position: Position, newStopLoss: number | null): number {
+    const quantity = Math.abs(position.quantity);
+    const multiplier = 100; // Options represent 100 shares
+
+    // Handle stock positions
+    if (position.type === 'stock') {
+      if (newStopLoss === null) {
+        // No stop loss - max loss is entire position value
+        return position.currentPrice * quantity;
+      }
+      
+      // Calculate loss from current price to stop loss
+      return (position.currentPrice - newStopLoss) * quantity;
+    }
+
+    // Handle option positions
+    if (position.type === 'call' || position.type === 'put') {
+      if (position.positionType === 'long') {
+        // Long options: max loss is premium paid
+        return position.purchasePrice * multiplier * quantity;
+      } else {
+        // Short options: calculate max loss based on stop loss
+        if (newStopLoss === null) {
+          // No stop loss - max loss is theoretically unlimited
+          return Number.MAX_SAFE_INTEGER;
+        }
+
+        if (position.type === 'call') {
+          // Short call: loss when underlying rises above strike
+          return (newStopLoss - position.strike) * multiplier * quantity;
+        } else {
+          // Short put: loss when underlying falls below strike
+          return (position.strike - newStopLoss) * multiplier * quantity;
+        }
+      }
+    }
+
+    return 0;
+  }
+
+  /**
+   * Calculate margin utilization percentage and trigger warnings
+   * @param marginRequirement The margin required for the current trade
+   * @param cashBalance The current cash balance in the account
+   * @returns Object containing utilization percentage and warning status
+   */
+  static calculateMarginUtilization(
+    marginRequirement: number,
+    cashBalance: number
+  ): { utilization: number; status: 'safe' | 'amber' | 'red' } {
+    if (cashBalance <= 0) {
+      return { utilization: 100, status: 'red' };
+    }
+
+    const utilization = (marginRequirement / cashBalance) * 100;
+    let status: 'safe' | 'amber' | 'red' = 'safe';
+
+    if (utilization >= 80) {
+      status = 'red';
+      console.warn(`Margin utilization RED ZONE: ${utilization.toFixed(2)}%`);
+    } else if (utilization >= 60) {
+      status = 'amber';
+      console.warn(`Margin utilization AMBER WARNING: ${utilization.toFixed(2)}%`);
+    }
+
+    return { utilization, status };
   }
 }
