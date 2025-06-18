@@ -8,7 +8,7 @@ import {
   tslyCollarStrategyThunk
 } from '../redux/etfStrategyThunks';
 import { portfolioActions } from '../redux/portfolioSlice';
-import { PositionModifyDialog } from './PositionModifyDialog';
+import PositionModifyDialog from './PositionModifyDialog';
 import { Chart } from 'react-chartjs-2';
 import {
   Chart as ChartJS,
@@ -349,8 +349,10 @@ const ETFStrategyBuilder: React.FC = () => {
       
       {selectedPosition && (
         <PositionModifyDialog
+          open={modifyDialogOpen}
           onClose={() => setModifyDialogOpen(false)}
           position={selectedPosition}
+          currentPrice={null}
           onModify={handleModifyPosition}
         />
       )}

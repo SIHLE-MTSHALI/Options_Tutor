@@ -256,7 +256,7 @@ export const portfolioSlice = createSlice({
           const newPosition = {
             id: positionId,
             symbol: leg.symbol,
-            type: leg.optionType,
+            type: (leg.optionType || 'call') as "call" | "put",
             positionType: 'long' as 'long', // Explicitly type as union type
             quantity: leg.quantity,
             strike: leg.strike,
@@ -274,7 +274,7 @@ export const portfolioSlice = createSlice({
           const newPosition = {
             id: positionId,
             symbol: leg.symbol,
-            type: leg.optionType,
+            type: (leg.optionType || 'call') as "call" | "put",
             positionType: 'short' as 'short', // Explicitly type as union type
             quantity: -leg.quantity,
             strike: leg.strike,

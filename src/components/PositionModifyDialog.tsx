@@ -11,13 +11,15 @@ interface PositionModifyDialogProps {
   onClose: () => void;
   position: Position;
   currentPrice: number | null;
+  onModify: (modifiedPosition: Position) => void;
 }
 
-const PositionModifyDialog: React.FC<PositionModifyDialogProps> = ({ 
-  open, 
-  onClose, 
-  position, 
-  currentPrice 
+const PositionModifyDialog: React.FC<PositionModifyDialogProps> = ({
+  open,
+  onClose,
+  position,
+  currentPrice,
+  onModify
 }) => {
   const dispatch = useAppDispatch();
   const accountId = useAppSelector(state => state.trading.accountId);

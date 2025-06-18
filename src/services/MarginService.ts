@@ -35,11 +35,11 @@ export class MarginService {
     // 1. 100% option proceeds + 20% underlying - out of money amount
     // 2. Option proceeds + 10% underlying
     const optionValue = (leg.premium || 0) * leg.quantity * 100;
-    const underlyingValue = leg.strike * leg.quantity * 100;
+    const underlyingValue = (leg.strike || 0) * leg.quantity * 100;
     
     const outOfMoneyAmount = leg.optionType === 'call'
-      ? Math.max(0, leg.strike - underlyingPrice)
-      : Math.max(0, underlyingPrice - leg.strike);
+      ? Math.max(0, (leg.strike || 0) - underlyingPrice)
+      : Math.max(0, underlyingPrice - (leg.strike || 0));
       
     const method1 = optionValue + (0.2 * underlyingValue) - (outOfMoneyAmount * leg.quantity * 100);
     const method2 = optionValue + (0.1 * underlyingValue);
@@ -57,8 +57,8 @@ export class MarginService {
     const longLegs = legs.filter(leg => leg.action === 'buy');
     const shortLegs = legs.filter(leg => leg.action === 'sell');
     
-    const maxLoss = shortLegs.reduce((total, leg) => total + (leg.strike * leg.quantity * 100), 0) -
-                   longLegs.reduce((total, leg) => total + (leg.strike * leg.quantity * 100), 0);
+    const maxLoss = shortLegs.reduce((total, leg) => total + ((leg.strike || 0) * leg.quantity * 100), 0) -
+                   longLegs.reduce((total, leg) => total + ((leg.strike || 0) * leg.quantity * 100), 0);
     
     return Math.max(0, maxLoss);
   }
@@ -104,7 +104,7 @@ export class MarginService {
         const putLeg = legs.find(leg => leg.optionType === 'put' && leg.action === 'sell');
         if (putLeg) {
           // Full strike amount required as margin
-          margin = putLeg.strike * multiplier * putLeg.quantity;
+          margin = (putLeg.strike || 0) * multiplier * putLeg.quantity;
         }
         break;
       }
@@ -116,11 +116,11 @@ export class MarginService {
         if (shortCall && longPut) {
           // Base margin calculation without dividend factor
           // Base margin is the spread between short call and long put strikes
-          let baseMargin = (shortCall.strike - longPut.strike) * multiplier * shortCall.quantity;
+          let baseMargin = ((shortCall.strike || 0) - (longPut.strike || 0)) * multiplier * shortCall.quantity;
           
           // Apply minimum spread requirement (10% of stock price)
           const minSpread = stockPrice * 0.10;
-          if ((shortCall.strike - longPut.strike) < minSpread) {
+          if (((shortCall.strike || 0) - (longPut.strike || 0)) < minSpread) {
             baseMargin = minSpread * multiplier * shortCall.quantity;
           }
           
@@ -128,7 +128,7 @@ export class MarginService {
           margin = baseMargin * dividendRiskFactor;
           
           // Risk metrics
-          const delta = (shortCall.strike - stockPrice) / stockPrice;
+          const delta = ((shortCall.strike || 0) - stockPrice) / stockPrice;
           const gamma = 0.05; // Simplified gamma calculation
           const theta = -0.03; // Daily time decay
           
@@ -191,10 +191,10 @@ export class MarginService {
 
         if (position.type === 'call') {
           // Short call: loss when underlying rises above strike
-          return (newStopLoss - position.strike) * multiplier * quantity;
+          return (newStopLoss - (position.strike || 0)) * multiplier * quantity;
         } else {
           // Short put: loss when underlying falls below strike
-          return (position.strike - newStopLoss) * multiplier * quantity;
+          return ((position.strike || 0) - newStopLoss) * multiplier * quantity;
         }
       }
     }
