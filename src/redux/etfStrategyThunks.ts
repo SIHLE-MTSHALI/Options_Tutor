@@ -126,29 +126,28 @@ export const mstyCoveredCallThunk = createAsyncThunk(
   async (position: {
     symbol: string;
     quantity: number;
-    strike: number;
+    strike?: number;
     expiry: string;
     simulate?: boolean
   }, { dispatch, getState, rejectWithValue }) => {
     try {
+      const { symbol, quantity, strike = 0, expiry, simulate = false } = position;
       const legs: OptionLeg[] = [
-        { symbol: position.symbol, quantity: position.quantity, optionType: 'call', strike: position.strike, expiry: position.expiry, action: 'sell' }
+        { symbol, quantity, optionType: 'call', strike, expiry, action: 'sell' }
       ];
       
-      if (position.simulate) {
-        // Simulation mode - calculate margin only
+      if (simulate) {
         const marginUsed = await TradeService.calculateMargin({
           type: 'covered-call',
-          symbol: position.symbol,
-          quantity: position.quantity,
-          strike: position.strike,
-          expiry: position.expiry
+          symbol,
+          quantity,
+          strike,
+          expiry
         }, getState() as RootState);
         
         return { marginUsed, status: 'simulated' };
       }
       
-      // Live execution
       const marginUsed = await TradeService.executeETFTrade('MSTY', legs, getState as () => RootState, dispatch);
       
       dispatch(executeTrade({
@@ -173,29 +172,28 @@ export const pltyCashSecuredPutThunk = createAsyncThunk(
   async (position: {
     symbol: string;
     quantity: number;
-    strike: number;
+    strike?: number;
     expiry: string;
     simulate?: boolean
   }, { dispatch, getState, rejectWithValue }) => {
     try {
+      const { symbol, quantity, strike = 0, expiry, simulate = false } = position;
       const legs: OptionLeg[] = [
-        { symbol: position.symbol, quantity: position.quantity, optionType: 'put', strike: position.strike, expiry: position.expiry, action: 'sell' }
+        { symbol, quantity, optionType: 'put', strike, expiry, action: 'sell' }
       ];
       
-      if (position.simulate) {
-        // Simulation mode - calculate margin only
+      if (simulate) {
         const marginUsed = await TradeService.calculateMargin({
           type: 'cash-secured-put',
-          symbol: position.symbol,
-          quantity: position.quantity,
-          strike: position.strike,
-          expiry: position.expiry
+          symbol,
+          quantity,
+          strike,
+          expiry
         }, getState() as RootState);
         
         return { marginUsed, status: 'simulated' };
       }
       
-      // Live execution
       const marginUsed = await TradeService.executeETFTrade('PLTY', legs, getState as () => RootState, dispatch);
       
       dispatch(executeTrade({
@@ -220,26 +218,27 @@ export const tslyCollarStrategyThunk = createAsyncThunk(
   async (position: {
     symbol: string;
     quantity: number;
-    callStrike: number;
-    putStrike: number;
+    callStrike?: number;
+    putStrike?: number;
     expiry: string;
     simulate?: boolean
   }, { dispatch, getState, rejectWithValue }) => {
     try {
+      const { symbol, quantity, callStrike = 0, putStrike = 0, expiry, simulate = false } = position;
       const legs: OptionLeg[] = [
-        { symbol: position.symbol, quantity: position.quantity, optionType: 'call', strike: position.callStrike, expiry: position.expiry, action: 'sell' },
-        { symbol: position.symbol, quantity: position.quantity, optionType: 'put', strike: position.putStrike, expiry: position.expiry, action: 'buy' }
+        { symbol, quantity, optionType: 'call', strike: callStrike, expiry, action: 'sell' },
+        { symbol, quantity, optionType: 'put', strike: putStrike, expiry, action: 'buy' }
       ];
       
-      if (position.simulate) {
+      if (simulate) {
         // Simulation mode - calculate margin only
         const marginUsed = await TradeService.calculateMargin({
           type: 'collar',
-          symbol: position.symbol,
-          quantity: position.quantity,
-          strike: position.callStrike,
-          putStrike: position.putStrike,
-          expiry: position.expiry
+          symbol,
+          quantity,
+          strike: callStrike,
+          putStrike,
+          expiry
         }, getState() as RootState);
         
         return { marginUsed, status: 'simulated' };

@@ -9,6 +9,7 @@ import {
 } from '../redux/etfStrategyThunks';
 import { portfolioActions } from '../redux/portfolioSlice';
 import PositionModifyDialog from './PositionModifyDialog';
+import MarketChart from './MarketChart'; // Add missing import
 import { Chart } from 'react-chartjs-2';
 import {
   Chart as ChartJS,
@@ -75,7 +76,7 @@ const ETFStrategyBuilder: React.FC = () => {
     }
   }, [strategyProfitLoss, cashBalance]);
 
-  const handleApplyStrategy = async () => {
+  const handleApplyStrategy = async (simulate: boolean) => {
     setStatus('pending');
     try {
       // Execute strategy based on type
@@ -86,7 +87,7 @@ const ETFStrategyBuilder: React.FC = () => {
             quantity: strategy.quantity || 100,
             strike: strategy.strike || 50,
             expiry: strategy.expiry || '2023-12-15',
-            simulate: false
+            simulate
           })).unwrap();
           break;
         case 'cash-secured-put':
@@ -95,7 +96,7 @@ const ETFStrategyBuilder: React.FC = () => {
             quantity: strategy.quantity || 100,
             strike: strategy.strike || 30,
             expiry: strategy.expiry || '2023-12-15',
-            simulate: false
+            simulate
           })).unwrap();
           break;
         case 'collar':
@@ -105,7 +106,7 @@ const ETFStrategyBuilder: React.FC = () => {
             callStrike: strategy.strike || 12,
             putStrike: strategy.putStrike || (strategy.strike || 12) * 0.9,
             expiry: strategy.expiry || '2023-12-15',
-            simulate: false
+            simulate
           })).unwrap();
           break;
         default:
@@ -189,15 +190,44 @@ const ETFStrategyBuilder: React.FC = () => {
       <div className="strategy-form">
         <div className="form-group">
           <label>Strategy Type</label>
-          <select
-            value={strategy.type}
-            onChange={(e) => setStrategy({...strategy, type: e.target.value as any})}
-          >
-            <option value="covered-call">Covered Call (MSTY)</option>
-            <option value="cash-secured-put">Cash-Secured Put (PLTY)</option>
-            <option value="collar">Collar Strategy (TSLY)</option>
-            <option value="custom">Custom Strategy</option>
-          </select>
+          <div className="radio-group">
+            <label>
+              <input
+                type="radio"
+                value="covered-call"
+                checked={strategy.type === 'covered-call'}
+                onChange={(e) => setStrategy({...strategy, type: e.target.value as any})}
+              />
+              Covered Call (MSTY)
+            </label>
+            <label>
+              <input
+                type="radio"
+                value="cash-secured-put"
+                checked={strategy.type === 'cash-secured-put'}
+                onChange={(e) => setStrategy({...strategy, type: e.target.value as any})}
+              />
+              Cash-Secured Put (PLTY)
+            </label>
+            <label>
+              <input
+                type="radio"
+                value="collar"
+                checked={strategy.type === 'collar'}
+                onChange={(e) => setStrategy({...strategy, type: e.target.value as any})}
+              />
+              Collar Strategy (TSLY)
+            </label>
+            <label>
+              <input
+                type="radio"
+                value="custom"
+                checked={strategy.type === 'custom'}
+                onChange={(e) => setStrategy({...strategy, type: e.target.value as any})}
+              />
+              Custom Strategy
+            </label>
+          </div>
         </div>
         
         {strategy.type === 'custom' && (
@@ -303,11 +333,18 @@ const ETFStrategyBuilder: React.FC = () => {
       {/* Action and Status */}
       <div className="action-section">
         <button
-          onClick={handleApplyStrategy}
+          onClick={() => handleApplyStrategy(false)}
           disabled={status === 'pending'}
           className={status === 'pending' ? 'pending' : ''}
         >
           {status === 'pending' ? 'Executing...' : 'Apply Strategy'}
+        </button>
+        <button
+          onClick={() => handleApplyStrategy(true)}
+          disabled={status === 'pending'}
+          className="simulate-btn"
+        >
+          Simulate Trade
         </button>
         
         {status === 'pending' && (
@@ -330,6 +367,12 @@ const ETFStrategyBuilder: React.FC = () => {
       
       {/* Charts Section */}
       <div className="charts-section">
+        {strategy && (
+          <div className="chart">
+            <h4>Payoff Diagram</h4>
+            <MarketChart strategy={strategy} />
+          </div>
+        )}
         <div className="chart">
           <h4>IRR vs. Dividend Yield</h4>
           <Chart type='bar' data={chartData} />

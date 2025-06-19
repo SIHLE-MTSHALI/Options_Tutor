@@ -1,14 +1,21 @@
 import React from 'react';
 import { useSelector } from 'react-redux';
 import { RootState } from '@redux/store';
+import type { ETFStrategyConfig } from '../redux/types';
 
-const MarketChart: React.FC = () => {
+interface MarketChartProps {
+  strategy?: ETFStrategyConfig;
+}
+
+const MarketChart: React.FC<MarketChartProps> = ({ strategy }) => {
   const { selectedSymbol, currentPrice, volatility } = useSelector((state: RootState) => state.marketData);
+  
+  const displaySymbol = strategy?.symbol || selectedSymbol;
   
   return (
     <div className="market-chart">
       <div className="chart-header">
-        <h2>{selectedSymbol || 'Select a Symbol'}</h2>
+        <h2>{displaySymbol || 'Select a Symbol'}</h2>
         <div className="chart-tools">
           <button>Payoff Diagram</button>
           <button>Risk Graph</button>
@@ -19,10 +26,11 @@ const MarketChart: React.FC = () => {
       <div className="chart-container">
         {/* Chart will go here - we'll use a charting library later */}
         <div className="chart-placeholder">
-          {selectedSymbol ? (
+          {displaySymbol ? (
             <>
-              <p>Live price chart for {selectedSymbol}</p>
+              <p>Live price chart for {displaySymbol}</p>
               <p>Last price: ${currentPrice.toFixed(2)}</p>
+              {strategy && <p>Strategy: {strategy.type}</p>}
             </>
           ) : (
             <p>Please select a symbol to view chart</p>
