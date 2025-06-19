@@ -10,15 +10,17 @@ export interface OptionLeg {
   premium: number;
 }
 
+export type StrategyType = 'covered-call' | 'cash-secured-put' | 'collar' | 'custom';
+
 export interface ETFStrategyConfig {
-  name: string;
-  legs: OptionLeg[];
-  description: string;
-  type?: string;
-  symbol?: string;
-  quantity?: number;
+  name?: string;
+  legs?: OptionLeg[];
+  description?: string;
+  type: StrategyType;
+  symbol: string;
+  quantity: number;
   strike?: number;
-  expiry?: string;
+  expiry: string;
   putStrike?: number;
 }
 

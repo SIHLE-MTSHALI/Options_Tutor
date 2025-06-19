@@ -50,7 +50,8 @@ const ETFStrategyBuilder: React.FC = () => {
   const dispatch = useAppDispatch();
   const unrealizedPL = useAppSelector(state => state.portfolio.unrealizedPL);
   const marginUsage = useAppSelector(state => state.portfolio.marginUsage);
-  const strategyProfitLoss = useAppSelector(state => state.portfolio.strategyProfitLoss[strategy.name] || 0);
+  const strategyName = strategy.name || 'default';
+  const strategyProfitLoss = useAppSelector(state => state.portfolio.strategyProfitLoss[strategyName] || 0);
   const positions = useAppSelector(state => state.portfolio.positions);
   const cashBalance = useAppSelector(state => state.portfolio.cashBalance);
   
@@ -84,7 +85,8 @@ const ETFStrategyBuilder: React.FC = () => {
             symbol: strategy.symbol || 'MSTY',
             quantity: strategy.quantity || 100,
             strike: strategy.strike || 50,
-            expiry: strategy.expiry || '2023-12-15'
+            expiry: strategy.expiry || '2023-12-15',
+            simulate: false
           })).unwrap();
           break;
         case 'cash-secured-put':
@@ -92,7 +94,8 @@ const ETFStrategyBuilder: React.FC = () => {
             symbol: strategy.symbol || 'PLTY',
             quantity: strategy.quantity || 100,
             strike: strategy.strike || 30,
-            expiry: strategy.expiry || '2023-12-15'
+            expiry: strategy.expiry || '2023-12-15',
+            simulate: false
           })).unwrap();
           break;
         case 'collar':
@@ -101,11 +104,12 @@ const ETFStrategyBuilder: React.FC = () => {
             quantity: strategy.quantity || 100,
             callStrike: strategy.strike || 12,
             putStrike: strategy.putStrike || (strategy.strike || 12) * 0.9,
-            expiry: strategy.expiry || '2023-12-15'
+            expiry: strategy.expiry || '2023-12-15',
+            simulate: false
           })).unwrap();
           break;
         default:
-          await dispatch(applyETFStrategy(strategy)).unwrap();
+          await dispatch(applyETFStrategy({ strategyConfig: strategy, simulate: false })).unwrap();
       }
       
       setStatus('success');

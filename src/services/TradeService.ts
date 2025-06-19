@@ -1,10 +1,10 @@
 import { RootState } from '../redux/store';
 import { addPosition } from '../redux/portfolioSlice';
-import { updateStockQuote } from '../redux/marketDataSlice'; // Added
+import { updateStockQuote } from '../redux/marketDataSlice';
 import { OptionLeg } from '../redux/tradingSlice';
-import { Position } from '../redux/types';
+import { Position, ETFStrategyConfig } from '../redux/types'; // Added ETFStrategyConfig
 import { MarginService } from './MarginService';
-import { MockApiService } from './mockApiService'; // Added
+import { MockApiService } from './mockApiService';
 
 export class TradeService {
   static async executeTrade(legs: OptionLeg[], getState: () => RootState, dispatch: any) {
@@ -128,6 +128,84 @@ export class TradeService {
     }
     
     return margin;
+  }
+
+  static async calculateMargin(
+    strategy: ETFStrategyConfig,
+    state: RootState
+  ): Promise<number> {
+    // Create legs based on strategy type
+    let legs: OptionLeg[] = [];
+    
+    switch(strategy.type) {
+      case 'covered-call':
+        legs = [
+          {
+            symbol: strategy.symbol,
+            quantity: strategy.quantity,
+            optionType: 'call',
+            strike: strategy.strike,
+            expiry: strategy.expiry,
+            action: 'sell'
+          }
+        ];
+        break;
+      case 'cash-secured-put':
+        legs = [
+          {
+            symbol: strategy.symbol,
+            quantity: strategy.quantity,
+            optionType: 'put',
+            strike: strategy.strike,
+            expiry: strategy.expiry,
+            action: 'sell'
+          }
+        ];
+        break;
+      case 'collar':
+        legs = [
+          {
+            symbol: strategy.symbol,
+            quantity: strategy.quantity,
+            optionType: 'call',
+            strike: strategy.strike,
+            expiry: strategy.expiry,
+            action: 'sell'
+          },
+          {
+            symbol: strategy.symbol,
+            quantity: strategy.quantity,
+            optionType: 'put',
+            strike: strategy.putStrike!,
+            expiry: strategy.expiry,
+            action: 'buy'
+          }
+        ];
+        break;
+      default:
+        throw new Error(`Unsupported strategy type: ${strategy.type}`);
+    }
+    
+    // Get underlying price
+    const symbol = strategy.symbol;
+    const underlyingPrice = state.marketData.stockQuotes[symbol]?.price;
+    if (underlyingPrice === undefined) {
+      throw new Error(`Current price for ${symbol} not available`);
+    }
+    
+    try {
+      const dividendData = await MockApiService.getInstance().fetchDividendData(symbol);
+      return MarginService.calculateETFMargin(
+        symbol,
+        legs,
+        underlyingPrice,
+        dividendData.amount,
+        dividendData.daysToExDiv
+      );
+    } catch (e) {
+      console.error(`Failed to fetch dividend data for ${symbol}, using default values`);
+      return MarginService.calculateETFMargin(symbol, legs, underlyingPrice, 0, 0);
+    }
   }
 
   private static async _executeTradeCore(
