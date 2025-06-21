@@ -1,7 +1,7 @@
 import { RootState } from '../redux/store';
 import { addPosition } from '../redux/portfolioSlice';
 import { updateStockQuote } from '../redux/marketDataSlice';
-import { OptionLeg } from '../redux/tradingSlice';
+import { OptionLeg } from '../redux/types';
 import { Position, ETFStrategyConfig } from '../redux/types'; // Added ETFStrategyConfig
 import { MarginService } from './MarginService';
 import { MockApiService } from './mockApiService';
@@ -40,13 +40,14 @@ export class TradeService {
     dispatch: any
   ): Promise<number> {
     const legs: OptionLeg[] = [{
+      id: `covered-call-${etfSymbol}-${callStrike}-${expiry}-${Date.now()}`,
       symbol: etfSymbol,
       action: 'sell',
       quantity,
       optionType: 'call',
       strike: callStrike,
       expiry,
-      premium: 0 // Will be fetched from market data
+      premium: 0
     }];
     const margin = await this.executeETFTrade(etfSymbol, legs, getState, dispatch);
     
@@ -69,13 +70,14 @@ export class TradeService {
     dispatch: any
   ): Promise<number> {
     const legs: OptionLeg[] = [{
+      id: `put-selling-${etfSymbol}-${putStrike}-${expiry}-${Date.now()}`,
       symbol: etfSymbol,
       action: 'sell',
       quantity,
       optionType: 'put',
       strike: putStrike,
       expiry,
-      premium: 0 // Will be fetched from market data
+      premium: 0
     }];
     const margin = await this.executeETFTrade(etfSymbol, legs, getState, dispatch);
     
@@ -100,6 +102,7 @@ export class TradeService {
   ): Promise<number> {
     const legs: OptionLeg[] = [
       {
+        id: `collar-put-${etfSymbol}-${putStrike}-${expiry}-${Date.now()}`,
         symbol: etfSymbol,
         action: 'buy',
         quantity,
@@ -109,6 +112,7 @@ export class TradeService {
         premium: 0
       },
       {
+        id: `collar-call-${etfSymbol}-${callStrike}-${expiry}-${Date.now()}`,
         symbol: etfSymbol,
         action: 'sell',
         quantity,
@@ -141,44 +145,52 @@ export class TradeService {
       case 'covered-call':
         legs = [
           {
+            id: `covered-call-${strategy.symbol}-${strategy.strike}-${strategy.expiry}-${Date.now()}`,
             symbol: strategy.symbol,
             quantity: strategy.quantity,
             optionType: 'call',
             strike: strategy.strike,
             expiry: strategy.expiry,
-            action: 'sell'
+            action: 'sell',
+            premium: 0
           }
         ];
         break;
       case 'cash-secured-put':
         legs = [
           {
+            id: `cash-secured-put-${strategy.symbol}-${strategy.strike}-${strategy.expiry}-${Date.now()}`,
             symbol: strategy.symbol,
             quantity: strategy.quantity,
             optionType: 'put',
             strike: strategy.strike,
             expiry: strategy.expiry,
-            action: 'sell'
+            action: 'sell',
+            premium: 0
           }
         ];
         break;
       case 'collar':
         legs = [
           {
+            id: `collar-call-${strategy.symbol}-${strategy.strike}-${strategy.expiry}-${Date.now()}`,
             symbol: strategy.symbol,
             quantity: strategy.quantity,
             optionType: 'call',
             strike: strategy.strike,
             expiry: strategy.expiry,
-            action: 'sell'
+            action: 'sell',
+            premium: 0
           },
           {
+            id: `collar-put-${strategy.symbol}-${strategy.putStrike!}-${strategy.expiry}-${Date.now()}`,
             symbol: strategy.symbol,
             quantity: strategy.quantity,
             optionType: 'put',
             strike: strategy.putStrike!,
             expiry: strategy.expiry,
-            action: 'buy'
+            action: 'buy',
+            premium: 0
           }
         ];
         break;
@@ -333,20 +345,29 @@ export class TradeService {
       // In a real system, we would trigger a notification or mitigation strategy
     }
   }
-  static async closePosition(positionId: string, accountId: string): Promise<void> {
-    console.log(`Closing position ${positionId} for account ${accountId}`);
+  static async closePosition(id: string, closePrice: number, accountId: string): Promise<void> {
+    console.log(`Closing position ${id} at ${closePrice} for account ${accountId}`);
+    // In a real implementation, this would call a brokerage API with close price
+    return new Promise((resolve) => setTimeout(resolve, 1000));
+  }
+
+  static async modifyPosition(id: string, stopLoss: number | undefined, takeProfit: number | undefined, accountId: string): Promise<void> {
+    console.log(`Modifying position ${id} for account ${accountId}:`, { stopLoss, takeProfit });
     // In a real implementation, this would call a brokerage API
     return new Promise((resolve) => setTimeout(resolve, 1000));
   }
 
-  static async modifyPosition(positionId: string, stopLoss: number | undefined, takeProfit: number | undefined, accountId: string): Promise<void> {
-    console.log(`Modifying position ${positionId} for account ${accountId}:`, { stopLoss, takeProfit });
-    // In a real implementation, this would call a brokerage API
-    return new Promise((resolve) => setTimeout(resolve, 1000));
-  }
-
-  static async rollPosition(positionId: string, newExpiry: string, newStrike: number, accountId: string): Promise<void> {
+  static async rollPosition(
+    positionId: string,
+    newExpiry: string,
+    newStrike: number,
+    closeLeg: OptionLeg,
+    openLeg: OptionLeg,
+    accountId: string
+  ): Promise<void> {
     console.log(`Rolling position ${positionId} for account ${accountId} to ${newExpiry} ${newStrike}`);
+    console.log('Closing leg:', closeLeg);
+    console.log('Opening leg:', openLeg);
     // In a real implementation, this would call a brokerage API
     return new Promise((resolve) => setTimeout(resolve, 1000));
   }

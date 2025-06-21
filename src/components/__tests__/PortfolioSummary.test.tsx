@@ -41,7 +41,9 @@ describe('PortfolioSummary Component', () => {
   beforeEach(() => {
     store = configureStore({
       reducer: {
-        portfolio: portfolioReducer,
+        portfolio: {
+          ...portfolioReducer(undefined, { type: 'unknown' }),
+        } as PortfolioState,
       },
       preloadedState: {
         portfolio: {
@@ -163,7 +165,10 @@ describe('PortfolioSummary Component', () => {
   test('formats negative values correctly', () => {
     store = configureStore({
       reducer: {
-        portfolio: portfolioReducer,
+        portfolio: {
+          ...portfolioReducer(undefined, { type: 'unknown' }),
+          strategyProfitLoss: {}
+        },
       },
       preloadedState: {
         portfolio: {

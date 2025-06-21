@@ -1,5 +1,6 @@
 import { createAsyncThunk } from '@reduxjs/toolkit';
 import { TradeService } from '../services/TradeService';
+import * as RiskService from '../services/RiskService';
 import { executeTrade, setTradeError, setCustomStrategy, addStrategy, updateStrategyPL } from './tradingSlice';
 import type { RootState } from './store';
 import type { OptionLeg } from './tradingSlice';
@@ -69,6 +70,20 @@ export const applyETFStrategy = createAsyncThunk(
     if (simulate) {
       // In simulation mode, add to strategies without executing
       const strategyId = `sim-${Date.now()}`;
+      
+      // Calculate risk metrics
+      const riskMetrics = {
+        earlyAssignmentProb: RiskService.calculateEarlyAssignmentProbability(
+          'call', // TODO: Determine actual option type from strategy
+          100,    // Placeholder underlying price
+          strategyConfig.strike,
+          0.25,   // Placeholder time to expiry (3 months)
+          0.20     // Placeholder volatility
+        ),
+        volatilityImpact: await RiskService.calculateVolatilityImpact(strategyConfig.type, 30, 10),
+        dividendRisk: RiskService.calculateDividendRisk(strategyConfig.symbol, strategyConfig.expiry)
+      };
+      
       dispatch(addStrategy({
         id: strategyId,
         name: strategyConfig.name || `${strategyConfig.type || 'Custom'} Simulation`,
@@ -81,7 +96,8 @@ export const applyETFStrategy = createAsyncThunk(
           strike: strategyConfig.strike,
           putStrike: strategyConfig.putStrike,
           expiry: strategyConfig.expiry
-        }
+        },
+        riskMetrics // Add risk metrics to simulation
       }));
       
       return { strategyId, marginUsed, status: 'simulated' };

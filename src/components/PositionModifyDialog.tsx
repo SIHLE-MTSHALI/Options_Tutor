@@ -3,6 +3,7 @@ import { Dialog, DialogTitle, DialogContent, DialogActions, Button, TextField, T
 import { useAppDispatch, useAppSelector } from '../redux/hooks';
 import { closePosition, modifyPosition, rollPosition } from '../redux/tradeThunks';
 import { Position, OptionLeg } from '../redux/types';
+import { generateContractId } from './OrderBuilder';
 import { MarginService } from '../services/MarginService';
 import { TradeService } from '../services/TradeService';
 
@@ -57,19 +58,10 @@ const PositionModifyDialog: React.FC<PositionModifyDialogProps> = ({
     setError(null);
     
     try {
-      const closeLeg: OptionLeg = {
-        symbol: position.symbol,
-        quantity: position.quantity,
-        action: position.positionType === 'long' ? 'sell' : 'buy',
-        ...(position.type !== 'stock' && {
-          optionType: position.type as 'call' | 'put'
-        }),
-        strike: position.strike || 0,
-        expiry: position.expiry || '',
-        premium: currentPrice || position.currentPrice
-      };
-      
-      await dispatch(closePosition(position.id)).unwrap();
+      await dispatch(closePosition({
+        id: position.id,
+        closePrice: currentPrice || position.currentPrice
+      })).unwrap();
       onClose();
     } catch (err: any) {
       setError(`Failed to close position: ${err.message}`);
@@ -83,33 +75,49 @@ const PositionModifyDialog: React.FC<PositionModifyDialogProps> = ({
     setError(null);
     
     try {
-      // Create legs for rolling: close current + open new
+      // Generate unique IDs for the legs
+      const legId = `${position.id}-${Date.now()}`;
+      
       const closeLeg: OptionLeg = {
+        id: `${legId}-close`,
         symbol: position.symbol,
         quantity: position.quantity,
         action: position.positionType === 'long' ? 'sell' : 'buy',
-        optionType: position.type === 'stock' ? undefined : position.type,
+        optionType: position.type as 'call' | 'put',
         strike: position.strike || 0,
         expiry: position.expiry || '',
-        premium: currentPrice || position.currentPrice
+        premium: currentPrice || position.currentPrice,
+        contractId: generateContractId(
+          position.symbol,
+          position.type as 'call' | 'put',
+          position.strike || undefined,
+          position.expiry || undefined
+        )
       };
       
-      const newLeg: OptionLeg = {
+      const openLeg: OptionLeg = {
+        id: `${legId}-new`,
         symbol: position.symbol,
         quantity: position.quantity,
         action: position.positionType === 'long' ? 'buy' : 'sell',
-        ...(position.type !== 'stock' && {
-          optionType: position.type as 'call' | 'put'
-        }),
+        optionType: position.type as 'call' | 'put',
         strike: position.strike || 0,
         expiry: position.expiry ? getNextExpiry(position.expiry) : '',
-        premium: currentPrice ? currentPrice * 1.05 : position.currentPrice * 1.05
+        premium: currentPrice ? currentPrice * 1.05 : position.currentPrice * 1.05,
+        contractId: generateContractId(
+          position.symbol,
+          position.type as 'call' | 'put',
+          position.strike || undefined,
+          position.expiry ? getNextExpiry(position.expiry) : undefined
+        )
       };
       
       await dispatch(rollPosition({
         positionId: position.id,
-        newExpiry: position.expiry ? getNextExpiry(position.expiry) : '',
-        newStrike: position.strike || 0
+        newExpiry: openLeg.expiry!,
+        newStrike: openLeg.strike!,
+        closeLeg,
+        openLeg
       })).unwrap();
       onClose();
     } catch (err: any) {
@@ -138,7 +146,7 @@ const PositionModifyDialog: React.FC<PositionModifyDialogProps> = ({
       }
       
       await dispatch(modifyPosition({
-        positionId: position.id,
+        id: position.id,
         stopLoss: stopLoss === '' ? undefined : Number(stopLoss),
         takeProfit: takeProfit === '' ? undefined : Number(takeProfit)
       })).unwrap();

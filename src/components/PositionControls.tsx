@@ -6,7 +6,7 @@ import { closePosition } from '../redux/portfolioSlice';
 import { stockTradeThunk } from '../redux/tradeThunks';
 import { AlphaVantageService } from '../services/AlphaVantageService';
 import type { AppDispatch } from '../redux/store';
-import { PositionModifyDialog } from './PositionModifyDialog';
+import PositionModifyDialog from './PositionModifyDialog';
 
 interface PositionControlsProps {
   position: Position;
@@ -150,8 +150,14 @@ const PositionControls: React.FC<PositionControlsProps> = ({ position }) => {
       
       {showDialog && (
         <PositionModifyDialog
-          position={position}
+          open={showDialog}
           onClose={() => setShowDialog(false)}
+          position={position}
+          currentPrice={currentPrice}
+          onModify={(modifiedPosition) => {
+            // Placeholder for modify logic
+            console.log('Position modified:', modifiedPosition);
+          }}
         />
       )}
     </div>

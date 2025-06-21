@@ -4,30 +4,36 @@ import { RootState } from '@redux/store';
 import { addLeg, removeLeg, updateLeg, togglePayoffDiagram, toggleRiskGraph } from '@redux/tradingSlice';
 import { executeTradeThunk } from '@redux/tradeThunks';
 import { AppDispatch } from '@redux/store';
+import { OptionLeg } from '@redux/types';
+
+export function generateContractId(symbol: string, optionType: string, strike?: number, expiry?: string): string {
+  const strikePart = strike ? strike : 'NA';
+  const expiryPart = expiry ? expiry.replace(/-/g, '') : 'NA';
+  return `${symbol}-${optionType.charAt(0).toUpperCase()}${strikePart}-${expiryPart}`;
+}
 
 const OrderBuilder: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
   const { legs, showPayoffDiagram, showRiskGraph } = useSelector((state: RootState) => state.trading);
   
-  const [newLeg, setNewLeg] = useState({
+  const [newLeg, setNewLeg] = useState<OptionLeg>({
     symbol: 'AAPL',
-    optionType: 'call' as 'call' | 'put',
-    action: 'buy' as 'buy' | 'sell',
+    optionType: 'call',
+    action: 'buy',
     strike: 100,
     expiry: '',
     quantity: 1,
-    premium: 0.5
+    premium: 0.5,
+    id: '',
+    contractId: ''
   });
   
-  const generateContractId = (symbol: string, optionType: string, strike: number, expiry: string) => {
-    return `${symbol}-${optionType.charAt(0).toUpperCase()}${strike}-${expiry.replace(/-/g, '')}`;
-  };
   
   const handleAddLeg = () => {
     const contractId = generateContractId(
       newLeg.symbol,
       newLeg.optionType,
-      newLeg.strike,
+      newLeg.strike!,
       newLeg.expiry
     );
     
@@ -35,7 +41,7 @@ const OrderBuilder: React.FC = () => {
       ...newLeg,
       contractId,
       id: `leg-${Date.now()}`,
-      type: newLeg.optionType // Added type property
+      premium: newLeg.premium || 0
     }));
     
     // Reset form
@@ -46,7 +52,9 @@ const OrderBuilder: React.FC = () => {
       strike: 100,
       expiry: '',
       quantity: 1,
-      premium: 0.5
+      premium: 0.5,
+      id: '',
+      contractId: ''
     });
   };
   
@@ -158,14 +166,14 @@ const OrderBuilder: React.FC = () => {
             {legs.map(leg => (
               <li key={leg.id} className="leg-item">
                 <div className="leg-info">
-                  <span>{leg.symbol} {leg.action.toUpperCase()} {leg.quantity} {leg.optionType.toUpperCase()}</span>
+                  <span>{leg.symbol} {leg.action.toUpperCase()} {leg.quantity} {leg.optionType?.toUpperCase()}</span>
                   <span>Strike: ${leg.strike}</span>
                   <span>Exp: {leg.expiry}</span>
                   <span>Premium: ${leg.premium}</span>
                   <span>Contract: {leg.contractId}</span>
                 </div>
                 <div className="leg-actions">
-                  <button onClick={() => dispatch(removeLeg(leg.id))}>Remove</button>
+                  <button onClick={() => leg.id && dispatch(removeLeg(leg.id))}>Remove</button>
                 </div>
               </li>
             ))}

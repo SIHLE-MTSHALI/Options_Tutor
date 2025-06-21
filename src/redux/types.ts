@@ -1,15 +1,16 @@
-export type AssetType = 'call' | 'put' | 'stock';
-
 export interface OptionLeg {
+  id: string;
   symbol: string;
   quantity: number;
   action: 'buy' | 'sell';
-  optionType?: 'call' | 'put'; // Only for options
+  optionType: 'call' | 'put';
   strike?: number;
   expiry?: string;
+  contractId?: string;
   premium: number;
 }
 
+export type AssetType = 'call' | 'put' | 'stock';
 export type StrategyType = 'covered-call' | 'cash-secured-put' | 'collar' | 'custom';
 
 export interface ETFStrategyConfig {
@@ -39,4 +40,19 @@ export interface Position {
   unrealizedPL: number;
   lastUpdated?: string;
   strategyId?: string;
+}
+
+export interface PortfolioState {
+  cashBalance: number;
+  positions: Position[];
+  unrealizedPL: number;
+  realizedPL: number;
+  marginUsage: number;
+  isPending: boolean;
+  priceUpdateTimestamp: number;
+  updatesPerSecond: number;
+  lastSecondUpdates: number;
+  maxUpdatesPerSecond: number;
+  lastUpdateTime: number;
+  strategyProfitLoss: { [strategyId: string]: number };
 }

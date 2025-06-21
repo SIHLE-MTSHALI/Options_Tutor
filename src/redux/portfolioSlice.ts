@@ -1,5 +1,5 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
-import { OptionLeg } from './tradingSlice';
+import { OptionLeg } from './types';
 import { executeTradeThunk } from './tradingSlice';
 import { realTimeService } from '../services/realTimeService';
 
@@ -20,7 +20,7 @@ export interface Position {
   strategyId?: string; // Added to track ETF strategy association
 }
 
-interface PortfolioState {
+export interface PortfolioState {
   cashBalance: number;
   positions: Position[];
   unrealizedPL: number;
@@ -36,7 +36,7 @@ interface PortfolioState {
   strategyProfitLoss: { [strategyId: string]: number }; // Track P/L per strategy
 }
 
-const initialState: PortfolioState = {
+export const initialState: PortfolioState = {
   cashBalance: 10000,
   positions: [],
   unrealizedPL: 0,

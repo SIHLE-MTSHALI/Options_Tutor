@@ -2,7 +2,7 @@ import { createAsyncThunk } from '@reduxjs/toolkit';
 import { TradeService } from '../services/TradeService';
 import { executeTrade, setTradeError } from './tradingSlice';
 import type { RootState } from './store';
-import type { OptionLeg } from './tradingSlice';
+import type { OptionLeg } from './types';
 import { HistoricalDataService } from '../services/historicalDataService';
 import {
   fetchHistoricalDataStart,
@@ -59,28 +59,34 @@ export const stockTradeThunk = createAsyncThunk(
 
 export const closePosition = createAsyncThunk(
   'trading/closePosition',
-  async (positionId: string, { getState }) => {
+  async ({ id, closePrice }: { id: string; closePrice: number }, { getState }) => {
     const state = getState() as RootState;
-    await TradeService.closePosition(positionId, state.trading.accountId);
-    return positionId;
+    await TradeService.closePosition(id, closePrice, state.trading.accountId);
+    return id;
   }
 );
 
 export const modifyPosition = createAsyncThunk(
   'trading/modifyPosition',
-  async ({ positionId, stopLoss, takeProfit }: { positionId: string; stopLoss?: number; takeProfit?: number }, { getState }) => {
+  async ({ id, stopLoss, takeProfit }: { id: string; stopLoss?: number; takeProfit?: number }, { getState }) => {
     const state = getState() as RootState;
-    await TradeService.modifyPosition(positionId, stopLoss, takeProfit, state.trading.accountId);
-    return { positionId, stopLoss, takeProfit };
+    await TradeService.modifyPosition(id, stopLoss, takeProfit, state.trading.accountId);
+    return { id, stopLoss, takeProfit };
   }
 );
 
 export const rollPosition = createAsyncThunk(
   'trading/rollPosition',
-  async ({ positionId, newExpiry, newStrike }: { positionId: string; newExpiry: string; newStrike: number }, { getState }) => {
+  async ({ positionId, newExpiry, newStrike, closeLeg, openLeg }: {
+    positionId: string;
+    newExpiry: string;
+    newStrike: number;
+    closeLeg: OptionLeg;
+    openLeg: OptionLeg;
+  }, { getState }) => {
     const state = getState() as RootState;
-    await TradeService.rollPosition(positionId, newExpiry, newStrike, state.trading.accountId);
-    return { positionId, newExpiry, newStrike };
+    await TradeService.rollPosition(positionId, newExpiry, newStrike, closeLeg, openLeg, state.trading.accountId);
+    return { positionId, newExpiry, newStrike, closeLeg, openLeg };
   }
 );
 

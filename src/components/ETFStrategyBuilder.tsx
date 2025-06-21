@@ -7,6 +7,12 @@ import {
   pltyCashSecuredPutThunk,
   tslyCollarStrategyThunk
 } from '../redux/etfStrategyThunks';
+import {
+  calculateEarlyAssignmentProbability,
+  calculateVolatilityImpact,
+  calculateDividendRisk
+} from '../services/RiskService';
+import { getCurrentPrice, getHistoricalVolatility } from '../services/marketDataService';
 import { portfolioActions } from '../redux/portfolioSlice';
 import PositionModifyDialog from './PositionModifyDialog';
 import MarketChart from './MarketChart'; // Add missing import
@@ -59,6 +65,11 @@ const ETFStrategyBuilder: React.FC = () => {
   const [modifyDialogOpen, setModifyDialogOpen] = useState(false);
   const [selectedPosition, setSelectedPosition] = useState<Position | null>(null);
   const [yieldProgress, setYieldProgress] = useState(0);
+  const [riskMetrics, setRiskMetrics] = useState({
+    earlyAssignmentProb: 0,
+    volatilityImpact: 0,
+    dividendRisk: 0
+  });
   
   const handleModifyPosition = (modifiedPosition: Position) => {
     // Dispatch action to update position in Redux store
@@ -75,6 +86,48 @@ const ETFStrategyBuilder: React.FC = () => {
       setYieldProgress(progress);
     }
   }, [strategyProfitLoss, cashBalance]);
+
+  // Fetch risk metrics when strategy changes
+  useEffect(() => {
+    const fetchRiskMetrics = async () => {
+      try {
+        let optionType = 'call';
+        if (strategy.type === 'cash-secured-put') {
+          optionType = 'put';
+        }
+
+        const underlyingPrice = await getCurrentPrice(strategy.symbol);
+        const historicalVol = await getHistoricalVolatility(strategy.symbol);
+        const expiryDate = new Date(strategy.expiry);
+        const timeToExpiry = (expiryDate.getTime() - Date.now()) / (1000 * 60 * 60 * 24 * 365);
+        const baseMargin = underlyingPrice * 100; // Placeholder calculation
+        
+        const earlyAssignmentProb = await calculateEarlyAssignmentProbability(
+          optionType as 'call' | 'put',
+          underlyingPrice,
+          strategy.strike!,
+          timeToExpiry,
+          historicalVol
+        );
+
+        const volatilityImpact = await calculateVolatilityImpact(
+          strategy.type,
+          strategy.symbol,
+          baseMargin
+        );
+
+        const dividendRisk = await calculateDividendRisk(strategy.symbol, strategy.expiry);
+
+        setRiskMetrics({ earlyAssignmentProb, volatilityImpact, dividendRisk });
+      } catch (error) {
+        console.error('Error fetching risk metrics:', error);
+      }
+    };
+
+    if (strategy.symbol && strategy.strike && strategy.expiry) {
+      fetchRiskMetrics();
+    }
+  }, [strategy]);
 
   const handleApplyStrategy = async (simulate: boolean) => {
     setStatus('pending');
@@ -186,6 +239,67 @@ const ETFStrategyBuilder: React.FC = () => {
         </div>
       </div>
       
+      {/* Risk Analysis Section */}
+      <div className="risk-analysis">
+        <h4>Risk Analysis</h4>
+        <div className="risk-metric">
+          <label>Early Assignment Probability: {riskMetrics?.earlyAssignmentProb?.toFixed(1) || '0.0'}%</label>
+          <div className="progress-container">
+            <div className="progress-bar">
+              <div
+                className="progress"
+                style={{
+                  width: `${Math.min(100, riskMetrics?.earlyAssignmentProb || 0)}%`,
+                  backgroundColor: riskMetrics?.earlyAssignmentProb > 30 ? '#f44336' :
+                                  riskMetrics?.earlyAssignmentProb > 15 ? '#ff9800' : '#4caf50'
+                }}
+              ></div>
+            </div>
+          </div>
+          {riskMetrics?.earlyAssignmentProb > 30 && (
+            <div className="risk-warning danger">Warning: High early assignment risk</div>
+          )}
+        </div>
+
+        <div className="risk-metric">
+          <label>Volatility Impact: {riskMetrics?.volatilityImpact?.toFixed(1) || '0.0'}%</label>
+          <div className="progress-container">
+            <div className="progress-bar">
+              <div
+                className="progress"
+                style={{
+                  width: `${Math.min(100, riskMetrics?.volatilityImpact || 0)}%`,
+                  backgroundColor: riskMetrics?.volatilityImpact > 40 ? '#f44336' :
+                                  riskMetrics?.volatilityImpact > 20 ? '#ff9800' : '#4caf50'
+                }}
+              ></div>
+            </div>
+          </div>
+          {riskMetrics?.volatilityImpact > 40 && (
+            <div className="risk-warning danger">Warning: High volatility impact</div>
+          )}
+        </div>
+
+        <div className="risk-metric">
+          <label>Dividend Risk: {riskMetrics?.dividendRisk?.toFixed(1) || '0.0'}/10</label>
+          <div className="progress-container">
+            <div className="progress-bar">
+              <div
+                className="progress"
+                style={{
+                  width: `${(riskMetrics?.dividendRisk || 0) * 10}%`,
+                  backgroundColor: riskMetrics?.dividendRisk > 5 ? '#f44336' :
+                                  riskMetrics?.dividendRisk > 3 ? '#ff9800' : '#4caf50'
+                }}
+              ></div>
+            </div>
+          </div>
+          {riskMetrics?.dividendRisk > 5 && (
+            <div className="risk-warning danger">Warning: High dividend risk</div>
+          )}
+        </div>
+      </div>
+
       {/* Strategy Form */}
       <div className="strategy-form">
         <div className="form-group">

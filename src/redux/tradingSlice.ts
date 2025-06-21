@@ -1,19 +1,6 @@
 import { createSlice, PayloadAction, createAsyncThunk, Draft } from '@reduxjs/toolkit';
 import { RootState } from './store';
-import { ETFStrategyConfig } from './types';
-
-export interface OptionLeg {
-  id?: string;
-  symbol: string;
-  quantity: number;
-  action: 'buy' | 'sell';
-  optionType?: 'call' | 'put';
-  strike?: number;
-  expiry?: string;
-  contractId?: string;
-  premium?: number;
-}
-
+import { ETFStrategyConfig, OptionLeg } from './types';
 interface Strategy {
   id: string;
   name: string;
@@ -37,6 +24,11 @@ export interface ETFStrategyState {
     strike: number;
     putStrike?: number;
     expiry: string;
+  };
+  riskMetrics?: {
+    earlyAssignmentProb: number;
+    volatilityImpact: number;
+    dividendRisk: number;
   };
 }
 
@@ -67,11 +59,20 @@ export const tradingSlice = createSlice({
   initialState,
   reducers: {
     setCustomStrategy: (state: Draft<TradingState>, action: PayloadAction<ETFStrategyConfig>) => {
-      if (action.payload.legs) state.legs = action.payload.legs;
+      // Ensure all legs have required id/premium by adding defaults
+      const legsWithDefaults = (action.payload.legs || []).map(leg => ({
+        ...leg,
+        optionType: leg.optionType || 'call',
+        id: leg.id || Date.now().toString(),
+        premium: leg.premium || 0
+      }));
+      
+      if (action.payload.legs) state.legs = legsWithDefaults;
+      
       state.selectedStrategy = {
         id: 'custom',
         name: action.payload.name || 'Custom Strategy',
-        legs: action.payload.legs || [],
+        legs: legsWithDefaults,
         maxProfit: 0,
         maxLoss: 0,
         breakEvenPoints: [],
@@ -90,20 +91,41 @@ export const tradingSlice = createSlice({
       }
     },
     addLeg: (state, action: PayloadAction<OptionLeg>) => {
-      state.legs.push(action.payload);
+      // Ensure required id/premium are provided
+      const legWithDefaults = {
+        ...action.payload,
+        optionType: action.payload.optionType || 'call',
+        id: action.payload.id || Date.now().toString(),
+        premium: action.payload.premium || 0
+      };
+      state.legs.push(legWithDefaults);
     },
     removeLeg: (state, action: PayloadAction<string>) => {
       state.legs = state.legs.filter(leg => leg.id !== action.payload);
     },
-    updateLeg: (state, action: PayloadAction<OptionLeg>) => {
-      const index = state.legs.findIndex(l => l.id === action.payload.id);
-      if (index !== -1) {
-        state.legs[index] = action.payload;
+    updateLeg: (state, action: PayloadAction<{ index: number; leg: Partial<OptionLeg> }>) => {
+      if (state.legs[action.payload.index]) {
+        const existingLeg = state.legs[action.payload.index];
+        const updatedLeg = {
+          ...existingLeg,
+          ...action.payload.leg,
+          // Handle optionType default if missing in partial update
+          optionType: action.payload.leg.optionType || existingLeg.optionType
+        };
+        state.legs[action.payload.index] = updatedLeg;
       }
     },
     selectStrategy: (state, action: PayloadAction<Strategy>) => {
+      // Ensure all legs have required id/premium by adding defaults
+      const legsWithDefaults = action.payload.legs.map(leg => ({
+        ...leg,
+        optionType: leg.optionType || 'call',
+        id: leg.id || Date.now().toString(),
+        premium: leg.premium || 0
+      }));
+      
       state.selectedStrategy = action.payload;
-      state.legs = action.payload.legs;
+      state.legs = legsWithDefaults;
     },
     togglePayoffDiagram: (state) => {
       state.showPayoffDiagram = !state.showPayoffDiagram;
@@ -158,9 +180,17 @@ export const executeTradeThunk = createAsyncThunk(
     const state = getState() as RootState;
     
     return new Promise<OptionLeg[]>((resolve) => {
+      // Ensure all legs have required id/premium by adding defaults
+      const legsWithDefaults = legs.map(leg => ({
+        ...leg,
+        optionType: leg.optionType || 'call',
+        id: leg.id || Date.now().toString(),
+        premium: leg.premium || 0
+      }));
+      
       setTimeout(() => {
-        dispatch(executeTrade({ legs, marginUsed: 0, status: 'completed' }));
-        resolve(legs);
+        dispatch(executeTrade({ legs: legsWithDefaults, marginUsed: 0, status: 'completed' }));
+        resolve(legsWithDefaults);
       }, 1000);
     });
   }
