@@ -27,7 +27,7 @@
 | 3 | Single-Leg Strategies | Long calls/puts, cash-secured puts with margin effects |
 | 4 | Spread Strategies | Verticals, calendars, diagonals with edge cases |
 | 5 | Combination Strategies | Butterflies, iron condors, ratio spreads |
-| 6 | Income & ETF Overlays | MSTY covered calls, PLTY put-selling, TSLY collars |
+| 6 | Income & ETF Overlays | MSTY covered calls, PLTY put-selling, TSLY collars (Implemented) |
 | 7 | Portfolio Management | Position sizing, volatility arbitrage, tail-risk hedging |
 
 ## 3. Core Gameplay
@@ -52,12 +52,12 @@
 - **Market Data**: Historical options chains with realistic spreads
 - **Volatility Modeling**: Adjustable skew/term structure for Greeks
 - **Strategy Math**: P/L, Greeks, probability calculations
-- **WebSocket Stability**:
-  - Exponential backoff with jitter for reconnections
-  - Heartbeat mechanism to maintain connection
-  - Message queuing during disconnections
-  - Redux store integration for connection status
-  - Development/production environment handling
+- **WebSocket Stability**: Implemented
+  - ✅ Exponential backoff with jitter for reconnections
+  - ✅ Heartbeat mechanism to maintain connection
+  - ✅ Message queuing during disconnections
+  - ✅ Redux store integration for connection status
+  - ✅ Development/production environment handling
 - **Persistence**: Secure cloud-synced user profiles
 ### API Credentials Setup
 - **AlphaVantage API Key**:
@@ -93,3 +93,5 @@
 - **Implementation**:
   - File path: `public/icon.ico`
   - Used in Windows taskbar, application window title bar, and installer branding
+
+*ETF Overlays implementation completed: 2025-06-21*
