@@ -1,3 +1,5 @@
+import { ETFStrategyState } from './tradingSlice';
+
 export interface OptionLeg {
   id: string;
   symbol: string;
@@ -45,6 +47,7 @@ export interface Position {
 export interface PortfolioState {
   cashBalance: number;
   positions: Position[];
+  strategies: ETFStrategyState[];  // Added strategies array
   unrealizedPL: number;
   realizedPL: number;
   marginUsage: number;

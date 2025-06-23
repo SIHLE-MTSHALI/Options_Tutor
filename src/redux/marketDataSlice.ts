@@ -18,7 +18,7 @@ export interface OptionChain {
   };
 }
 
-interface MarketDataState {
+export interface MarketDataState {
   currentPrice: number;
   volatility: number;
   optionChains: {
