@@ -1,5 +1,5 @@
 import { BlackScholes } from './pricingModels/BlackScholes';
-import { getHistoricalVolatility } from './marketDataService';
+import { getHistoricalVolatility, getHistoricalVolatilitySync } from './marketDataService';
 import { DividendCalendar } from './dividendCalendar';
 
 /**
@@ -45,8 +45,16 @@ export async function calculateVolatilityImpact(
   symbol: string,
   baseMargin: number
 ): Promise<number> {
-  const historicalVol = await getHistoricalVolatility(symbol);
-  const vixFactor = historicalVol / 20; // Normalize to VIX=20 baseline
+  let historicalVol: number;
+  
+  try {
+    historicalVol = await getHistoricalVolatility(symbol);
+  } catch (error) {
+    console.warn(`Failed to get historical volatility for ${symbol}, using default`);
+    historicalVol = getHistoricalVolatilitySync(symbol);
+  }
+  
+  const vixFactor = historicalVol / 0.20; // Normalize to 20% baseline volatility
   
   let multiplier;
   switch(strategyType) {

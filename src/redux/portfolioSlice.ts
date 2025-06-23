@@ -209,6 +209,32 @@ export const portfolioSlice = createSlice({
     },
     setCashBalance: (state, action: PayloadAction<number>) => {
       state.cashBalance = action.payload;
+    },
+    // New actions for real-time P&L updates
+    updatePositionPL: (state, action: PayloadAction<{ positionId: string; currentPrice: number; unrealizedPL: number }>) => {
+      const { positionId, currentPrice, unrealizedPL } = action.payload;
+      const position = state.positions.find(p => p.id === positionId);
+      if (position) {
+        const previousPL = position.unrealizedPL;
+        position.currentPrice = currentPrice;
+        position.unrealizedPL = unrealizedPL;
+        position.lastUpdated = new Date().toISOString();
+        
+        // Update strategy P/L with actual change
+        if (position.strategyId) {
+          const plChange = unrealizedPL - previousPL;
+          state.strategyProfitLoss[position.strategyId] =
+            (state.strategyProfitLoss[position.strategyId] || 0) + plChange;
+        }
+      }
+      
+      // Recalculate total portfolio P&L
+      state.unrealizedPL = calculatePortfolioPL(state.positions);
+    },
+    updatePortfolioPL: (state, action: PayloadAction<{ unrealizedPL: number; totalValue: number }>) => {
+      const { unrealizedPL, totalValue } = action.payload;
+      state.unrealizedPL = unrealizedPL;
+      // You could add totalValue to state if needed
     }
   },
   extraReducers: (builder) => {
@@ -358,7 +384,7 @@ export const setupPriceListener = (dispatch: any) => {
 };
 
 export const portfolioActions = portfolioSlice.actions;
-export const { addPosition, updatePosition, updatePositionPrice, batchUpdatePositionPrices, modifyPosition, closePosition, updateMarginUsage, setPending, resetMetrics, setCashBalance } = portfolioSlice.actions;
+export const { addPosition, updatePosition, updatePositionPrice, batchUpdatePositionPrices, modifyPosition, closePosition, updateMarginUsage, setPending, resetMetrics, setCashBalance, updatePositionPL, updatePortfolioPL } = portfolioSlice.actions;
 
 // Helper to calculate profit/loss for a position including strategy context
 export const calculatePositionProfitLoss = async (position: Position): Promise<number> => {

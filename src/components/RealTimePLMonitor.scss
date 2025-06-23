@@ -1,0 +1,249 @@
+@use '../styles/variables' as *;
+
+.realtime-pl-monitor {
+  background-color: $panel-bg;
+  border: 1px solid $border-color;
+  border-radius: 8px;
+  padding: $spacing-md;
+  margin: $spacing-sm 0;
+  color: $light-text;
+
+  &.loading {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100px;
+  }
+
+  .header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: $spacing-md;
+    border-bottom: 1px solid $border-color;
+    padding-bottom: $spacing-sm;
+
+    h3 {
+      margin: 0;
+      color: $light-text;
+      font-size: $font-size-lg;
+    }
+
+    .status-indicator {
+      display: flex;
+      align-items: center;
+      gap: $spacing-sm;
+      font-size: $font-size-sm;
+
+      .connection-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        display: inline-block;
+
+        &.connected {
+          background-color: $positive-color;
+          box-shadow: 0 0 4px $positive-color;
+        }
+
+        &.disconnected {
+          background-color: $negative-color;
+          box-shadow: 0 0 4px $negative-color;
+        }
+      }
+
+      .status-text {
+        font-weight: 500;
+      }
+
+      .last-update {
+        color: rgba($light-text, 0.7);
+        font-size: 0.8rem;
+      }
+    }
+  }
+
+  .error-message {
+    background-color: rgba($critical-color, 0.1);
+    border: 1px solid $critical-color;
+    border-radius: 4px;
+    padding: $spacing-sm;
+    margin-bottom: $spacing-md;
+    display: flex;
+    align-items: center;
+    gap: $spacing-sm;
+    color: $critical-color;
+    font-size: $font-size-sm;
+
+    .error-icon {
+      font-size: 1.2em;
+    }
+  }
+
+  .pl-summary {
+    .metric-row {
+      display: flex;
+      gap: $spacing-md;
+      margin-bottom: $spacing-md;
+
+      &:last-child {
+        margin-bottom: 0;
+      }
+
+      .metric {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+
+        label {
+          font-size: $font-size-sm;
+          color: rgba($light-text, 0.8);
+          font-weight: 500;
+          text-transform: uppercase;
+          letter-spacing: 0.5px;
+        }
+
+        .value {
+          font-size: $font-size-md;
+          font-weight: 600;
+          font-family: 'Courier New', monospace;
+
+          &.large {
+            font-size: $font-size-xl;
+          }
+
+          &.positive {
+            color: $positive-color;
+          }
+
+          &.negative {
+            color: $negative-color;
+          }
+
+          &.neutral {
+            color: $light-text;
+          }
+        }
+      }
+    }
+  }
+
+  .position-details {
+    margin-top: $spacing-lg;
+    border-top: 1px solid $border-color;
+    padding-top: $spacing-md;
+
+    h4 {
+      margin: 0 0 $spacing-md 0;
+      color: $light-text;
+      font-size: $font-size-md;
+    }
+
+    .position-list {
+      display: flex;
+      flex-direction: column;
+      gap: $spacing-sm;
+    }
+
+    .position-item {
+      background-color: rgba($border-color, 0.3);
+      border-radius: 4px;
+      padding: $spacing-sm;
+
+      .position-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: $spacing-sm;
+
+        .symbol {
+          font-weight: 600;
+          color: $light-text;
+        }
+
+        .current-price {
+          font-family: 'Courier New', monospace;
+          color: rgba($light-text, 0.9);
+        }
+      }
+
+      .position-metrics {
+        display: flex;
+        gap: $spacing-md;
+
+        .metric.small {
+          .value {
+            font-size: $font-size-sm;
+          }
+        }
+      }
+    }
+  }
+
+  .footer {
+    margin-top: $spacing-md;
+    padding-top: $spacing-sm;
+    border-top: 1px solid $border-color;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: $font-size-sm;
+    color: rgba($light-text, 0.7);
+
+    .update-frequency {
+      font-style: italic;
+    }
+
+    .position-count {
+      font-weight: 500;
+    }
+  }
+}
+
+// Responsive design
+@media (max-width: 768px) {
+  .realtime-pl-monitor {
+    .header {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: $spacing-sm;
+    }
+
+    .pl-summary .metric-row {
+      flex-direction: column;
+      gap: $spacing-sm;
+    }
+
+    .position-details .position-metrics {
+      flex-direction: column;
+      gap: $spacing-sm;
+    }
+
+    .footer {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 4px;
+    }
+  }
+}
+
+// Animation for value changes
+.realtime-pl-monitor .value {
+  transition: color 0.3s ease, transform 0.2s ease;
+
+  &.updating {
+    transform: scale(1.05);
+  }
+}
+
+// Pulse animation for connection status
+@keyframes pulse {
+  0% { opacity: 1; }
+  50% { opacity: 0.5; }
+  100% { opacity: 1; }
+}
+
+.realtime-pl-monitor .connection-dot.connected {
+  animation: pulse 2s infinite;
+}

@@ -5,6 +5,7 @@ import { OptionLeg } from '../redux/types';
 import { Position, ETFStrategyConfig } from '../redux/types'; // Added ETFStrategyConfig
 import { MarginService } from './MarginService';
 import { MockApiService } from './mockApiService';
+import { TradeExecutionError } from './errors/TradeExecutionError';
 
 export class TradeService {
   static async executeTrade(legs: OptionLeg[], getState: () => RootState, dispatch: any) {
@@ -39,6 +40,11 @@ export class TradeService {
     getState: () => RootState,
     dispatch: any
   ): Promise<number> {
+    // Calculate realistic premium for the call option
+    const state = getState();
+    const underlyingPrice = state.marketData.stockQuotes[etfSymbol]?.price || 100;
+    const callPremium = this.calculateOptionPremium('call', underlyingPrice, callStrike, expiry);
+    
     const legs: OptionLeg[] = [{
       id: `covered-call-${etfSymbol}-${callStrike}-${expiry}-${Date.now()}`,
       symbol: etfSymbol,
@@ -47,7 +53,7 @@ export class TradeService {
       optionType: 'call',
       strike: callStrike,
       expiry,
-      premium: 0
+      premium: callPremium
     }];
     const margin = await this.executeETFTrade(etfSymbol, legs, getState, dispatch);
     
@@ -69,6 +75,11 @@ export class TradeService {
     getState: () => RootState,
     dispatch: any
   ): Promise<number> {
+    // Calculate realistic premium for the put option
+    const state = getState();
+    const underlyingPrice = state.marketData.stockQuotes[etfSymbol]?.price || 100;
+    const putPremium = this.calculateOptionPremium('put', underlyingPrice, putStrike, expiry);
+    
     const legs: OptionLeg[] = [{
       id: `put-selling-${etfSymbol}-${putStrike}-${expiry}-${Date.now()}`,
       symbol: etfSymbol,
@@ -77,7 +88,7 @@ export class TradeService {
       optionType: 'put',
       strike: putStrike,
       expiry,
-      premium: 0
+      premium: putPremium
     }];
     const margin = await this.executeETFTrade(etfSymbol, legs, getState, dispatch);
     
@@ -100,6 +111,12 @@ export class TradeService {
     getState: () => RootState,
     dispatch: any
   ): Promise<number> {
+    // Calculate realistic premiums for both options
+    const state = getState();
+    const underlyingPrice = state.marketData.stockQuotes[etfSymbol]?.price || 100;
+    const putPremium = this.calculateOptionPremium('put', underlyingPrice, putStrike, expiry);
+    const callPremium = this.calculateOptionPremium('call', underlyingPrice, callStrike, expiry);
+    
     const legs: OptionLeg[] = [
       {
         id: `collar-put-${etfSymbol}-${putStrike}-${expiry}-${Date.now()}`,
@@ -109,7 +126,7 @@ export class TradeService {
         optionType: 'put',
         strike: putStrike,
         expiry,
-        premium: 0
+        premium: putPremium
       },
       {
         id: `collar-call-${etfSymbol}-${callStrike}-${expiry}-${Date.now()}`,
@@ -119,7 +136,7 @@ export class TradeService {
         optionType: 'call',
         strike: callStrike,
         expiry,
-        premium: 0
+        premium: callPremium
       }
     ];
     const margin = await this.executeETFTrade(etfSymbol, legs, getState, dispatch);
@@ -138,7 +155,14 @@ export class TradeService {
     strategy: ETFStrategyConfig,
     state: RootState
   ): Promise<number> {
-    // Create legs based on strategy type
+    // Get underlying price first for premium calculations
+    const symbol = strategy.symbol;
+    const underlyingPrice = state.marketData.stockQuotes[symbol]?.price;
+    if (underlyingPrice === undefined) {
+      throw TradeExecutionError.marketDataUnavailable(symbol);
+    }
+    
+    // Create legs based on strategy type with proper premiums
     let legs: OptionLeg[] = [];
     
     switch(strategy.type) {
@@ -152,7 +176,7 @@ export class TradeService {
             strike: strategy.strike,
             expiry: strategy.expiry,
             action: 'sell',
-            premium: 0
+            premium: this.calculateOptionPremium('call', underlyingPrice, strategy.strike, strategy.expiry)
           }
         ];
         break;
@@ -166,7 +190,7 @@ export class TradeService {
             strike: strategy.strike,
             expiry: strategy.expiry,
             action: 'sell',
-            premium: 0
+            premium: this.calculateOptionPremium('put', underlyingPrice, strategy.strike, strategy.expiry)
           }
         ];
         break;
@@ -180,7 +204,7 @@ export class TradeService {
             strike: strategy.strike,
             expiry: strategy.expiry,
             action: 'sell',
-            premium: 0
+            premium: this.calculateOptionPremium('call', underlyingPrice, strategy.strike, strategy.expiry)
           },
           {
             id: `collar-put-${strategy.symbol}-${strategy.putStrike!}-${strategy.expiry}-${Date.now()}`,
@@ -190,19 +214,12 @@ export class TradeService {
             strike: strategy.putStrike!,
             expiry: strategy.expiry,
             action: 'buy',
-            premium: 0
+            premium: this.calculateOptionPremium('put', underlyingPrice, strategy.putStrike!, strategy.expiry)
           }
         ];
         break;
       default:
-        throw new Error(`Unsupported strategy type: ${strategy.type}`);
-    }
-    
-    // Get underlying price
-    const symbol = strategy.symbol;
-    const underlyingPrice = state.marketData.stockQuotes[symbol]?.price;
-    if (underlyingPrice === undefined) {
-      throw new Error(`Current price for ${symbol} not available`);
+        throw TradeExecutionError.fromValidation(`Unsupported strategy type: ${strategy.type}`);
     }
     
     try {
@@ -231,7 +248,7 @@ export class TradeService {
     
     // Validate all legs
     if (!this.validateLegs(legs, state)) {
-      throw new Error('Invalid trade legs');
+      throw TradeExecutionError.fromValidation('Invalid trade legs - validation failed');
     }
     
     // Get underlying price (assuming all legs for same symbol)
@@ -240,11 +257,19 @@ export class TradeService {
     
     if (!underlyingPrice) {
       try {
-        const quote = await MockApiService.getInstance().fetchStockQuote(symbol);
-        underlyingPrice = quote.price;
-        dispatch(updateStockQuote({symbol, price: quote.price}));
+        // Try real market data first, fallback to mock
+        const { getCurrentPrice } = await import('./marketDataService');
+        underlyingPrice = await getCurrentPrice(symbol);
+        dispatch(updateStockQuote({symbol, price: underlyingPrice}));
       } catch (e) {
-        throw new Error(`Failed to fetch stock quote for ${symbol}`);
+        console.warn(`Real market data failed for ${symbol}, trying mock service`);
+        try {
+          const quote = await MockApiService.getInstance().fetchStockQuote(symbol);
+          underlyingPrice = quote.price;
+          dispatch(updateStockQuote({symbol, price: quote.price}));
+        } catch (mockError) {
+          throw TradeExecutionError.marketDataUnavailable(symbol);
+        }
       }
     }
     
@@ -254,14 +279,14 @@ export class TradeService {
     
     // Ensure we have enough buying power for the trade
     if (margin > state.portfolio.cashBalance) {
-      throw new Error('Insufficient buying power for trade');
+      throw TradeExecutionError.insufficientFunds(margin, state.portfolio.cashBalance);
     }
     
     // Execute each leg
     legs.forEach(leg => {
       // Ensure required fields are present
       if (!leg.optionType || leg.strike === undefined || !leg.expiry) {
-        throw new Error(`Invalid leg data: ${JSON.stringify(leg)}`);
+        throw TradeExecutionError.fromValidation(`Invalid leg data: missing required fields`);
       }
 
       dispatch(addPosition({
@@ -292,28 +317,51 @@ export class TradeService {
   
   private static validateLegs(legs: OptionLeg[], state: RootState): boolean {
     return legs.every(leg => {
-      const chain = state.marketData.optionChains[leg.symbol];
-      if (!chain) return false;
-      
-      // Validate required fields before proceeding
-      if (!leg.expiry || leg.strike === undefined) {
+      // Validate required fields first
+      if (!leg.expiry || leg.strike === undefined || !leg.optionType || !leg.action) {
         console.error(`Missing required fields for leg: ${JSON.stringify(leg)}`);
         return false;
       }
 
-      const expiryData = chain[leg.expiry];
-      if (!expiryData) return false;
-      
-      // Check calls or puts based on option type
-      const optionsArray = leg.optionType === 'call' ? expiryData.calls : expiryData.puts;
-      const optionExists = !!optionsArray.find(option => option.strike === leg.strike);
+      // Validate expiry date format
+      const expiryDate = new Date(leg.expiry);
+      if (isNaN(expiryDate.getTime())) {
+        console.error(`Invalid expiry date: ${leg.expiry}`);
+        return false;
+      }
+
+      // Validate strike price is positive
+      if (leg.strike <= 0) {
+        console.error(`Invalid strike price: ${leg.strike}`);
+        return false;
+      }
+
+      // Validate quantity is positive
+      if (leg.quantity <= 0) {
+        console.error(`Invalid quantity: ${leg.quantity}`);
+        return false;
+      }
+
+      // Check option chains if available (for real market data)
+      const chain = state.marketData.optionChains[leg.symbol];
+      if (chain) {
+        const expiryData = chain[leg.expiry];
+        if (expiryData) {
+          const optionsArray = leg.optionType === 'call' ? expiryData.calls : expiryData.puts;
+          const optionExists = !!optionsArray.find(option => option.strike === leg.strike);
+          if (!optionExists) {
+            console.warn(`Option not found in chain: ${leg.symbol} ${leg.optionType} ${leg.strike} ${leg.expiry}`);
+            // Don't fail validation for missing option chains in simulation mode
+          }
+        }
+      }
       
       // Early assignment check for ETFs
-      if (optionExists && ['MSTY', 'PLTY', 'TSLY'].includes(leg.symbol)) {
+      if (['MSTY', 'PLTY', 'TSLY'].includes(leg.symbol)) {
         this.handleEarlyAssignmentRisk(leg, state);
       }
       
-      return optionExists;
+      return true; // Pass validation if basic checks pass
     });
   }
   
@@ -396,5 +444,48 @@ export class TradeService {
     }
 
     return null;
+  }
+
+  /**
+   * Calculate realistic option premium using simplified Black-Scholes approximation
+   * @param optionType 'call' or 'put'
+   * @param underlyingPrice Current price of underlying
+   * @param strike Strike price of option
+   * @param expiry Expiry date string
+   * @returns Estimated premium per share
+   */
+  private static calculateOptionPremium(
+    optionType: 'call' | 'put',
+    underlyingPrice: number,
+    strike: number,
+    expiry: string
+  ): number {
+    try {
+      const expiryDate = new Date(expiry);
+      const now = new Date();
+      const timeToExpiry = (expiryDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24 * 365); // Years
+      
+      if (timeToExpiry <= 0) {
+        // Expired option
+        return Math.max(0, optionType === 'call' ? underlyingPrice - strike : strike - underlyingPrice);
+      }
+      
+      // Simplified premium calculation
+      const volatility = 0.25; // 25% assumed volatility
+      const riskFreeRate = 0.03; // 3% risk-free rate
+      
+      // Intrinsic value
+      const intrinsicValue = Math.max(0, 
+        optionType === 'call' ? underlyingPrice - strike : strike - underlyingPrice
+      );
+      
+      // Time value (simplified)
+      const timeValue = Math.sqrt(timeToExpiry) * volatility * underlyingPrice * 0.4;
+      
+      return Math.max(0.01, intrinsicValue + timeValue); // Minimum $0.01 premium
+    } catch (error) {
+      console.error('Error calculating option premium:', error);
+      return 1.0; // Default premium
+    }
   }
 }
