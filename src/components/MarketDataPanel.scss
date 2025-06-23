@@ -1,0 +1,433 @@
+@use '../styles/variables' as *;
+
+.market-data-panel {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background-color: $panel-bg;
+  color: $light-text;
+  padding: $spacing-md;
+}
+
+.panel-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: $spacing-lg;
+  padding-bottom: $spacing-md;
+  border-bottom: 1px solid $border-color;
+
+  .header-left {
+    display: flex;
+    align-items: center;
+    gap: $spacing-md;
+
+    h3 {
+      margin: 0;
+      color: $light-text;
+      font-size: $font-size-lg;
+    }
+
+    .market-status {
+      display: flex;
+      align-items: center;
+      gap: $spacing-sm;
+      padding: 4px 8px;
+      border-radius: 12px;
+      font-size: $font-size-sm;
+      font-weight: 500;
+
+      .status-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+      }
+
+      &.open {
+        background-color: rgba($positive-color, 0.1);
+        color: $positive-color;
+        border: 1px solid $positive-color;
+
+        .status-dot {
+          background-color: $positive-color;
+          box-shadow: 0 0 4px $positive-color;
+        }
+      }
+
+      &.closed {
+        background-color: rgba($negative-color, 0.1);
+        color: $negative-color;
+        border: 1px solid $negative-color;
+
+        .status-dot {
+          background-color: $negative-color;
+        }
+      }
+    }
+  }
+
+  .header-right {
+    display: flex;
+    align-items: center;
+    gap: $spacing-md;
+
+    .last-update {
+      font-size: $font-size-sm;
+      color: rgba($light-text, 0.7);
+    }
+
+    .refresh-btn {
+      width: 32px;
+      height: 32px;
+      background-color: transparent;
+      border: 1px solid $border-color;
+      border-radius: 4px;
+      color: $light-text;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+      transition: all 0.2s ease;
+
+      &:hover:not(:disabled) {
+        border-color: $primary-color;
+        background-color: rgba($primary-color, 0.1);
+      }
+
+      &:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+        animation: spin 1s linear infinite;
+      }
+    }
+  }
+}
+
+.error-message {
+  display: flex;
+  align-items: center;
+  gap: $spacing-sm;
+  padding: $spacing-sm;
+  background-color: rgba($negative-color, 0.1);
+  border: 1px solid $negative-color;
+  border-radius: 4px;
+  color: $negative-color;
+  font-size: $font-size-sm;
+  margin-bottom: $spacing-md;
+
+  .error-icon {
+    font-size: 1.2em;
+  }
+}
+
+.quotes-container {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-md;
+  overflow: hidden;
+}
+
+.quotes-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: $spacing-md;
+
+  .quote-item {
+    background-color: rgba($border-color, 0.3);
+    border: 1px solid $border-color;
+    border-radius: 6px;
+    padding: $spacing-md;
+    cursor: pointer;
+    transition: all 0.3s ease;
+
+    &:hover {
+      border-color: $primary-color;
+      background-color: rgba($primary-color, 0.1);
+    }
+
+    &.selected {
+      border-color: $primary-color;
+      background-color: rgba($primary-color, 0.15);
+      box-shadow: 0 0 0 2px rgba($primary-color, 0.3);
+    }
+
+    &.loading {
+      opacity: 0.7;
+    }
+
+    .quote-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: $spacing-sm;
+
+      .symbol {
+        font-size: $font-size-md;
+        font-weight: 600;
+        color: $light-text;
+      }
+
+      .source {
+        font-size: 0.7rem;
+        color: rgba($light-text, 0.6);
+        text-transform: uppercase;
+        background-color: rgba($border-color, 0.5);
+        padding: 2px 4px;
+        border-radius: 2px;
+      }
+    }
+
+    .price-info {
+      margin-bottom: $spacing-sm;
+
+      .price {
+        display: block;
+        font-size: $font-size-lg;
+        font-weight: 600;
+        font-family: 'Courier New', monospace;
+        color: $light-text;
+        margin-bottom: 2px;
+      }
+
+      .change {
+        font-size: $font-size-sm;
+        font-family: 'Courier New', monospace;
+        font-weight: 500;
+
+        &.positive {
+          color: $positive-color;
+        }
+
+        &.negative {
+          color: $negative-color;
+        }
+
+        &.neutral {
+          color: rgba($light-text, 0.7);
+        }
+      }
+    }
+
+    .volume-info {
+      .volume {
+        font-size: $font-size-sm;
+        color: rgba($light-text, 0.7);
+      }
+    }
+
+    .loading-placeholder {
+      display: flex;
+      align-items: center;
+      gap: $spacing-sm;
+      color: rgba($light-text, 0.6);
+
+      .loading-spinner {
+        width: 16px;
+        height: 16px;
+        border: 2px solid rgba($primary-color, 0.3);
+        border-top: 2px solid $primary-color;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+      }
+    }
+  }
+}
+
+.quote-details {
+  background-color: rgba($border-color, 0.2);
+  border-radius: 6px;
+  padding: $spacing-md;
+  border: 1px solid $border-color;
+
+  h4 {
+    margin: 0 0 $spacing-md 0;
+    color: $light-text;
+    font-size: $font-size-md;
+  }
+
+  .details-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: $spacing-md;
+    margin-bottom: $spacing-md;
+
+    .detail-item {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+
+      label {
+        font-size: 0.75rem;
+        color: rgba($light-text, 0.7);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+      }
+
+      .value {
+        font-size: $font-size-sm;
+        font-weight: 600;
+        font-family: 'Courier New', monospace;
+
+        &.positive {
+          color: $positive-color;
+        }
+
+        &.negative {
+          color: $negative-color;
+        }
+      }
+    }
+  }
+
+  .quick-actions {
+    display: flex;
+    gap: $spacing-sm;
+    flex-wrap: wrap;
+
+    .action-btn {
+      padding: $spacing-sm;
+      background-color: transparent;
+      border: 1px solid $border-color;
+      border-radius: 4px;
+      color: $light-text;
+      font-size: $font-size-sm;
+      cursor: pointer;
+      transition: all 0.2s ease;
+
+      &:hover {
+        border-color: $primary-color;
+        background-color: rgba($primary-color, 0.1);
+      }
+    }
+  }
+}
+
+.market-info {
+  margin-top: $spacing-lg;
+  padding-top: $spacing-md;
+  border-top: 1px solid $border-color;
+
+  .info-section {
+    margin-bottom: $spacing-md;
+
+    &:last-child {
+      margin-bottom: 0;
+    }
+
+    h5 {
+      margin: 0 0 $spacing-sm 0;
+      color: $light-text;
+      font-size: $font-size-sm;
+      font-weight: 600;
+    }
+
+    .hours-info,
+    .providers-info {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+
+      .hours-item,
+      .provider-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-size: $font-size-sm;
+
+        .label,
+        .provider-name {
+          color: rgba($light-text, 0.8);
+        }
+
+        .value {
+          color: $light-text;
+          font-family: 'Courier New', monospace;
+        }
+
+        .provider-status {
+          font-size: 0.7rem;
+          padding: 2px 6px;
+          border-radius: 8px;
+          text-transform: uppercase;
+          font-weight: 600;
+
+          &.connected {
+            background-color: rgba($positive-color, 0.2);
+            color: $positive-color;
+          }
+
+          &.disconnected {
+            background-color: rgba($negative-color, 0.2);
+            color: $negative-color;
+          }
+        }
+      }
+    }
+  }
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .market-data-panel {
+    padding: $spacing-sm;
+  }
+
+  .panel-header {
+    flex-direction: column;
+    gap: $spacing-sm;
+    align-items: stretch;
+
+    .header-left,
+    .header-right {
+      justify-content: space-between;
+    }
+  }
+
+  .quotes-list {
+    grid-template-columns: 1fr;
+  }
+
+  .quote-details .details-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .quick-actions {
+    justify-content: center;
+  }
+}
+
+/* Animations */
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.quote-item {
+  animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Custom scrollbar */
+.quotes-container {
+  scrollbar-width: thin;
+  scrollbar-color: $primary-color $panel-bg;
+
+  &::-webkit-scrollbar {
+    width: 8px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: $panel-bg;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background-color: $primary-color;
+    border-radius: 4px;
+  }
+}

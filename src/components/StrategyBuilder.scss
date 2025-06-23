@@ -1,0 +1,446 @@
+@use '../styles/variables' as *;
+
+.strategy-builder {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  padding: $spacing-md;
+  background-color: $panel-bg;
+  color: $light-text;
+  overflow-y: auto;
+}
+
+.builder-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: $spacing-lg;
+  padding-bottom: $spacing-md;
+  border-bottom: 1px solid $border-color;
+
+  h2 {
+    margin: 0;
+    color: $light-text;
+    font-size: $font-size-xl;
+  }
+
+  .mode-toggle {
+    .toggle-switch {
+      position: relative;
+      display: flex;
+      align-items: center;
+      gap: $spacing-sm;
+      cursor: pointer;
+
+      input {
+        opacity: 0;
+        width: 0;
+        height: 0;
+      }
+
+      .slider {
+        position: relative;
+        width: 50px;
+        height: 24px;
+        background-color: $border-color;
+        border-radius: 12px;
+        transition: 0.3s;
+
+        &:before {
+          position: absolute;
+          content: "";
+          height: 18px;
+          width: 18px;
+          left: 3px;
+          bottom: 3px;
+          background-color: white;
+          border-radius: 50%;
+          transition: 0.3s;
+        }
+      }
+
+      input:checked + .slider {
+        background-color: $primary-color;
+      }
+
+      input:checked + .slider:before {
+        transform: translateX(26px);
+      }
+
+      .toggle-label {
+        font-size: $font-size-sm;
+        font-weight: 500;
+        color: $light-text;
+      }
+    }
+  }
+}
+
+.strategy-selection {
+  margin-bottom: $spacing-lg;
+
+  h3 {
+    margin: 0 0 $spacing-md 0;
+    color: $light-text;
+    font-size: $font-size-lg;
+  }
+
+  .strategy-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: $spacing-md;
+
+    .strategy-card {
+      background-color: rgba($border-color, 0.3);
+      border: 1px solid $border-color;
+      border-radius: 8px;
+      padding: $spacing-md;
+      cursor: pointer;
+      transition: all 0.3s ease;
+
+      &:hover {
+        border-color: $primary-color;
+        background-color: rgba($primary-color, 0.1);
+      }
+
+      &.selected {
+        border-color: $primary-color;
+        background-color: rgba($primary-color, 0.2);
+        box-shadow: 0 0 0 2px rgba($primary-color, 0.3);
+      }
+
+      .card-header {
+        display: flex;
+        align-items: center;
+        gap: $spacing-sm;
+        margin-bottom: $spacing-sm;
+
+        .strategy-icon {
+          font-size: 1.5em;
+        }
+
+        h4 {
+          margin: 0;
+          flex: 1;
+          color: $light-text;
+          font-size: $font-size-md;
+        }
+
+        .risk-badge {
+          padding: 2px 8px;
+          border-radius: 12px;
+          font-size: 0.75rem;
+          font-weight: 600;
+          text-transform: uppercase;
+
+          &.low {
+            background-color: rgba($positive-color, 0.2);
+            color: $positive-color;
+          }
+
+          &.medium {
+            background-color: rgba($warning-color, 0.2);
+            color: $warning-color;
+          }
+
+          &.high {
+            background-color: rgba($negative-color, 0.2);
+            color: $negative-color;
+          }
+        }
+      }
+
+      .strategy-description {
+        margin: 0 0 $spacing-md 0;
+        color: rgba($light-text, 0.8);
+        font-size: $font-size-sm;
+        line-height: 1.4;
+      }
+
+      .strategy-metrics {
+        display: flex;
+        gap: $spacing-md;
+
+        .metric {
+          flex: 1;
+          display: flex;
+          flex-direction: column;
+          gap: 4px;
+
+          label {
+            font-size: 0.75rem;
+            color: rgba($light-text, 0.6);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+          }
+
+          span {
+            font-size: $font-size-sm;
+            font-weight: 600;
+            color: $light-text;
+          }
+        }
+      }
+    }
+  }
+}
+
+.strategy-config {
+  h3 {
+    margin: 0 0 $spacing-md 0;
+    color: $light-text;
+    font-size: $font-size-lg;
+  }
+
+  .config-form {
+    margin-bottom: $spacing-lg;
+
+    .form-row {
+      display: flex;
+      gap: $spacing-md;
+      margin-bottom: $spacing-md;
+
+      .form-group {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        gap: $spacing-sm;
+
+        label {
+          font-size: $font-size-sm;
+          font-weight: 500;
+          color: $light-text;
+        }
+
+        input,
+        select {
+          padding: $spacing-sm;
+          background-color: $input-bg;
+          border: 1px solid $border-color;
+          border-radius: 4px;
+          color: $light-text;
+          font-size: $font-size-sm;
+
+          &:focus {
+            outline: none;
+            border-color: $primary-color;
+            box-shadow: 0 0 0 2px rgba($primary-color, 0.2);
+          }
+
+          option {
+            background-color: $input-bg;
+            color: $light-text;
+          }
+        }
+
+        input[type="number"] {
+          font-family: 'Courier New', monospace;
+        }
+      }
+    }
+  }
+
+  .strategy-analysis {
+    margin-bottom: $spacing-lg;
+    padding: $spacing-md;
+    background-color: rgba($border-color, 0.2);
+    border-radius: 6px;
+
+    h4 {
+      margin: 0 0 $spacing-md 0;
+      color: $light-text;
+      font-size: $font-size-md;
+    }
+
+    .analysis-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: $spacing-md;
+
+      .analysis-item {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+
+        label {
+          font-size: 0.75rem;
+          color: rgba($light-text, 0.7);
+          text-transform: uppercase;
+          letter-spacing: 0.5px;
+        }
+
+        span {
+          font-size: $font-size-md;
+          font-weight: 600;
+          font-family: 'Courier New', monospace;
+
+          &.positive {
+            color: $positive-color;
+          }
+
+          &.negative {
+            color: $negative-color;
+          }
+        }
+      }
+    }
+  }
+
+  .requirements-check {
+    margin-bottom: $spacing-lg;
+
+    h4 {
+      margin: 0 0 $spacing-sm 0;
+      color: $light-text;
+      font-size: $font-size-md;
+    }
+
+    ul {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+
+      .requirement-item {
+        display: flex;
+        align-items: center;
+        gap: $spacing-sm;
+        padding: $spacing-sm 0;
+        font-size: $font-size-sm;
+        color: rgba($light-text, 0.9);
+
+        .check-icon {
+          color: $positive-color;
+          font-weight: bold;
+        }
+      }
+    }
+  }
+
+  .error-message,
+  .success-message {
+    display: flex;
+    align-items: center;
+    gap: $spacing-sm;
+    padding: $spacing-md;
+    border-radius: 6px;
+    margin-bottom: $spacing-md;
+    font-size: $font-size-sm;
+
+    .error-icon,
+    .success-icon {
+      font-size: 1.2em;
+    }
+  }
+
+  .error-message {
+    background-color: rgba($negative-color, 0.1);
+    border: 1px solid $negative-color;
+    color: $negative-color;
+  }
+
+  .success-message {
+    background-color: rgba($positive-color, 0.1);
+    border: 1px solid $positive-color;
+    color: $positive-color;
+  }
+
+  .execute-section {
+    .execute-btn {
+      width: 100%;
+      padding: $spacing-md;
+      background-color: $primary-color;
+      border: none;
+      border-radius: 6px;
+      color: white;
+      font-size: $font-size-md;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: $spacing-sm;
+
+      &:hover:not(:disabled) {
+        background-color: lighten($primary-color, 10%);
+        transform: translateY(-1px);
+        box-shadow: 0 4px 8px rgba($primary-color, 0.3);
+      }
+
+      &:disabled {
+        background-color: $disabled-color;
+        cursor: not-allowed;
+        transform: none;
+        box-shadow: none;
+      }
+
+      .loading-spinner {
+        width: 16px;
+        height: 16px;
+        border: 2px solid rgba(white, 0.3);
+        border-top: 2px solid white;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+      }
+    }
+  }
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .strategy-builder {
+    padding: $spacing-sm;
+  }
+
+  .builder-header {
+    flex-direction: column;
+    gap: $spacing-md;
+    align-items: stretch;
+  }
+
+  .strategy-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .config-form .form-row {
+    flex-direction: column;
+  }
+
+  .analysis-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+/* Animations */
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.strategy-config {
+  animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Custom scrollbar */
+.strategy-builder {
+  scrollbar-width: thin;
+  scrollbar-color: $primary-color $panel-bg;
+
+  &::-webkit-scrollbar {
+    width: 8px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: $panel-bg;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background-color: $primary-color;
+    border-radius: 4px;
+  }
+}
