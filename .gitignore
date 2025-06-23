@@ -19,3 +19,4 @@ logs/
 # MemLog tracking files
 memlog/*.log
 acli.exe
+memlog/
