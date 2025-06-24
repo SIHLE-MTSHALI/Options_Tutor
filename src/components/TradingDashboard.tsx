@@ -4,7 +4,7 @@ import PortfolioSummary from './PortfolioSummary';
 import RealTimePLMonitor from './RealTimePLMonitor';
 import AdvancedMarketChart from './AdvancedMarketChart';
 import StrategyBuilder from './StrategyBuilder';
-import EducationalPanel from './EducationalPanel';
+import EnhancedEducationalPanel from './EnhancedEducationalPanel';
 import MarketDataPanel from './MarketDataPanel';
 import RiskDashboard from './RiskDashboard';
 import './TradingDashboard.scss';
@@ -52,7 +52,7 @@ const TradingDashboard: React.FC = () => {
       case 'learning':
         return (
           <div className="learning-view">
-            <EducationalPanel 
+            <EnhancedEducationalPanel 
               currentStrategy={null}
               selectedSymbol={selectedSymbol}
             />
@@ -63,7 +63,11 @@ const TradingDashboard: React.FC = () => {
         return (
           <div className="analysis-view">
             <div className="risk-section">
-              <RiskDashboard />
+              <RiskDashboard 
+                portfolio={portfolio}
+                marketData={marketData}
+                cashBalance={portfolio.cashBalance}
+              />
             </div>
             <div className="market-section">
               <MarketDataPanel symbols={['MSTY', 'PLTY', 'TSLY', 'SPY']} />
@@ -263,7 +267,7 @@ const TradingDashboard: React.FC = () => {
                 ×
               </button>
             </div>
-            <EducationalPanel 
+            <EnhancedEducationalPanel 
               currentStrategy={null}
               selectedSymbol={selectedSymbol}
               compact={true}

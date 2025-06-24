@@ -546,7 +546,11 @@ const ModernTradingDashboard: React.FC = () => {
             <Grid container spacing={3}>
               <Grid item xs={12} lg={6}>
                 <Paper elevation={2}>
-                  <RiskDashboard />
+                  <RiskDashboard 
+                    portfolio={portfolio}
+                    marketData={marketData}
+                    cashBalance={portfolio.cashBalance}
+                  />
                 </Paper>
               </Grid>
               <Grid item xs={12} lg={6}>

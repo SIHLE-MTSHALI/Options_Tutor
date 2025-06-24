@@ -32,7 +32,7 @@ export interface ETFStrategyState {
   };
 }
 
-interface TradingState {
+export interface TradingState {
   selectedStrategy: Strategy | null;
   legs: OptionLeg[];
   showPayoffDiagram: boolean;
@@ -195,5 +195,9 @@ export const executeTradeThunk = createAsyncThunk(
     });
   }
 );
+
+// Re-export types for convenience
+export type { OptionLeg } from './types';
+export type { TradingState };
 
 export default tradingSlice.reducer;

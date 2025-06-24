@@ -80,7 +80,7 @@ export const applyETFStrategy = createAsyncThunk(
           0.25,   // Placeholder time to expiry (3 months)
           0.20     // Placeholder volatility
         ),
-        volatilityImpact: await RiskService.calculateVolatilityImpact(strategyConfig.type, 30, 10),
+        volatilityImpact: await RiskService.calculateVolatilityImpact(strategyConfig.type, strategyConfig.symbol, 10),
         dividendRisk: RiskService.calculateDividendRisk(strategyConfig.symbol, strategyConfig.expiry)
       };
       
@@ -149,7 +149,16 @@ export const mstyCoveredCallThunk = createAsyncThunk(
     try {
       const { symbol, quantity, strike = 0, expiry, simulate = false } = position;
       const legs: OptionLeg[] = [
-        { symbol, quantity, optionType: 'call', strike, expiry, action: 'sell' }
+        { 
+          id: `${symbol}-call-${strike}-${expiry}`,
+          symbol, 
+          quantity, 
+          optionType: 'call', 
+          strike, 
+          expiry, 
+          action: 'sell',
+          premium: 0 // Will be calculated by the trade service
+        }
       ];
       
       if (simulate) {
@@ -195,7 +204,16 @@ export const pltyCashSecuredPutThunk = createAsyncThunk(
     try {
       const { symbol, quantity, strike = 0, expiry, simulate = false } = position;
       const legs: OptionLeg[] = [
-        { symbol, quantity, optionType: 'put', strike, expiry, action: 'sell' }
+        { 
+          id: `${symbol}-put-${strike}-${expiry}`,
+          symbol, 
+          quantity, 
+          optionType: 'put', 
+          strike, 
+          expiry, 
+          action: 'sell',
+          premium: 0 // Will be calculated by the trade service
+        }
       ];
       
       if (simulate) {
@@ -242,8 +260,26 @@ export const tslyCollarStrategyThunk = createAsyncThunk(
     try {
       const { symbol, quantity, callStrike = 0, putStrike = 0, expiry, simulate = false } = position;
       const legs: OptionLeg[] = [
-        { symbol, quantity, optionType: 'call', strike: callStrike, expiry, action: 'sell' },
-        { symbol, quantity, optionType: 'put', strike: putStrike, expiry, action: 'buy' }
+        { 
+          id: `${symbol}-call-${callStrike}-${expiry}`,
+          symbol, 
+          quantity, 
+          optionType: 'call', 
+          strike: callStrike, 
+          expiry, 
+          action: 'sell',
+          premium: 0 // Will be calculated by the trade service
+        },
+        { 
+          id: `${symbol}-put-${putStrike}-${expiry}`,
+          symbol, 
+          quantity, 
+          optionType: 'put', 
+          strike: putStrike, 
+          expiry, 
+          action: 'buy',
+          premium: 0 // Will be calculated by the trade service
+        }
       ];
       
       if (simulate) {

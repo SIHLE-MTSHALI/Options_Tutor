@@ -36,8 +36,9 @@ interface SmartTooltipContent {
   examples?: string[];
 }
 
-interface SmartTooltipProps extends Omit<TooltipProps, 'title'> {
+interface SmartTooltipProps extends Omit<TooltipProps, 'title' | 'children'> {
   content: SmartTooltipContent | string;
+  children: React.ReactElement;
   interactive?: boolean;
   showIcon?: boolean;
   iconType?: 'help' | 'info' | 'warning' | 'error' | 'success' | 'tip';

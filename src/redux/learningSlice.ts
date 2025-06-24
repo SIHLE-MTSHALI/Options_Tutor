@@ -15,12 +15,14 @@ interface World {
   missions: Mission[];
 }
 
-interface LearningState {
+export interface LearningState {
   currentWorld: number;
   worlds: World[];
   xp: number;
+  level: number;
   riskProfile: 'conservative' | 'balanced' | 'aggressive';
   journalEntries: string[];
+  availableMissions: Mission[];
 }
 
 const initialWorlds: World[] = [
@@ -66,8 +68,10 @@ const initialState: LearningState = {
   currentWorld: 1,
   worlds: initialWorlds,
   xp: 0,
+  level: 1,
   riskProfile: 'balanced',
   journalEntries: [],
+  availableMissions: initialWorlds.flatMap(world => world.missions.filter(mission => !mission.completed)),
 };
 
 export const learningSlice = createSlice({
@@ -85,6 +89,14 @@ export const learningSlice = createSlice({
         }
       }
       
+      // Update level based on XP (every 500 XP = 1 level)
+      state.level = Math.floor(state.xp / 500) + 1;
+      
+      // Update available missions
+      state.availableMissions = state.worlds.flatMap(world => 
+        world.missions.filter(mission => !mission.completed && world.unlocked)
+      );
+      
       // Check if we should unlock the next world
       const currentWorld = state.worlds.find(w => w.id === state.currentWorld);
       if (currentWorld && currentWorld.missions.every(m => m.completed)) {
@@ -92,6 +104,10 @@ export const learningSlice = createSlice({
         if (nextWorld) {
           nextWorld.unlocked = true;
           state.currentWorld = nextWorld.id;
+          // Update available missions again after unlocking
+          state.availableMissions = state.worlds.flatMap(world => 
+            world.missions.filter(mission => !mission.completed && world.unlocked)
+          );
         }
       }
     },

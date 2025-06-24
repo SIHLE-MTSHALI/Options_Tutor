@@ -212,6 +212,7 @@ const StrategyBuilder: React.FC<StrategyBuilderProps> = ({
       
       if (selectedStrategy === 'covered-call' && strategyConfig.symbol === 'MSTY') {
         result = await dispatch(mstyCoveredCallThunk({
+          symbol: strategyConfig.symbol,
           strike: strategyConfig.strike,
           expiry: strategyConfig.expiry,
           quantity: strategyConfig.quantity,
@@ -219,6 +220,7 @@ const StrategyBuilder: React.FC<StrategyBuilderProps> = ({
         })).unwrap();
       } else if (selectedStrategy === 'cash-secured-put' && strategyConfig.symbol === 'PLTY') {
         result = await dispatch(pltyCashSecuredPutThunk({
+          symbol: strategyConfig.symbol,
           strike: strategyConfig.strike,
           expiry: strategyConfig.expiry,
           quantity: strategyConfig.quantity,
@@ -226,6 +228,7 @@ const StrategyBuilder: React.FC<StrategyBuilderProps> = ({
         })).unwrap();
       } else if (selectedStrategy === 'collar' && strategyConfig.symbol === 'TSLY') {
         result = await dispatch(tslyCollarStrategyThunk({
+          symbol: strategyConfig.symbol,
           callStrike: strategyConfig.strike,
           putStrike: strategyConfig.putStrike!,
           expiry: strategyConfig.expiry,
@@ -240,10 +243,14 @@ const StrategyBuilder: React.FC<StrategyBuilderProps> = ({
         })).unwrap();
       }
 
+      const marginValue = typeof result === 'number' ? result : 
+                       (typeof result === 'object' && result !== null && 'marginUsed' in result) ? 
+                       (result as any).marginUsed : 0;
+      
       setExecutionResult(
         isSimulation 
-          ? `Strategy simulated successfully! Margin required: $${result.toFixed(2)}`
-          : `Strategy executed successfully! Margin used: $${result.toFixed(2)}`
+          ? `Strategy simulated successfully! Margin required: $${marginValue.toFixed(2)}`
+          : `Strategy executed successfully! Margin used: $${marginValue.toFixed(2)}`
       );
     } catch (err) {
       if (err instanceof TradeExecutionError) {
