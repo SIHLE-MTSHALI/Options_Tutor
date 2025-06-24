@@ -1,0 +1,468 @@
+@use '../styles/variables' as *;
+
+// Tour backdrop and overlay
+.tour-backdrop {
+  background: rgba(0, 0, 0, 0.7) !important;
+  backdrop-filter: blur(2px);
+}
+
+.tour-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  pointer-events: none;
+}
+
+// Highlighted element styles
+:global(.tour-highlight) {
+  position: relative;
+  z-index: 10001 !important;
+  box-shadow: 0 0 0 4px rgba(74, 222, 128, 0.6), 
+              0 0 0 8px rgba(74, 222, 128, 0.3),
+              0 0 20px rgba(74, 222, 128, 0.4) !important;
+  border-radius: 8px !important;
+  animation: tourPulse 2s infinite;
+  
+  &::before {
+    content: '';
+    position: absolute;
+    top: -8px;
+    left: -8px;
+    right: -8px;
+    bottom: -8px;
+    border: 2px solid $positive-color;
+    border-radius: 12px;
+    animation: tourGlow 2s infinite;
+    pointer-events: none;
+    z-index: -1;
+  }
+}
+
+// Tour tooltip
+.tour-tooltip {
+  max-width: 400px;
+  min-width: 300px;
+  background: rgba(28, 35, 51, 0.98) !important;
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 16px !important;
+  color: $light-text;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5) !important;
+  animation: tourSlideIn 0.3s ease-out;
+
+  &.mobile {
+    max-width: 90vw;
+    min-width: 280px;
+  }
+
+  // Tooltip arrow
+  &::before {
+    content: '';
+    position: absolute;
+    width: 0;
+    height: 0;
+    border: 8px solid transparent;
+  }
+
+  &.top::before {
+    bottom: -16px;
+    left: 50%;
+    transform: translateX(-50%);
+    border-top-color: rgba(28, 35, 51, 0.98);
+  }
+
+  &.bottom::before {
+    top: -16px;
+    left: 50%;
+    transform: translateX(-50%);
+    border-bottom-color: rgba(28, 35, 51, 0.98);
+  }
+
+  &.left::before {
+    right: -16px;
+    top: 50%;
+    transform: translateY(-50%);
+    border-left-color: rgba(28, 35, 51, 0.98);
+  }
+
+  &.right::before {
+    left: -16px;
+    top: 50%;
+    transform: translateY(-50%);
+    border-right-color: rgba(28, 35, 51, 0.98);
+  }
+
+  // Header
+  .tour-tooltip-header {
+    padding: $spacing-md $spacing-md $spacing-sm;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+
+    .tour-step-title {
+      color: $light-text;
+      font-weight: 600;
+      margin: 0;
+    }
+
+    .tour-close-button {
+      color: rgba(255, 255, 255, 0.7);
+      
+      &:hover {
+        color: $light-text;
+        background: rgba(255, 255, 255, 0.1);
+      }
+    }
+
+    .tour-progress-text {
+      color: rgba(255, 255, 255, 0.7);
+      font-weight: 500;
+      white-space: nowrap;
+    }
+
+    .tour-progress-bar {
+      height: 4px;
+      background: rgba(255, 255, 255, 0.2);
+      border-radius: 2px;
+      overflow: hidden;
+
+      .tour-progress-fill {
+        height: 100%;
+        background: linear-gradient(45deg, $positive-color, #06b6d4);
+        border-radius: 2px;
+        transition: width 0.3s ease;
+        animation: tourProgressGlow 2s infinite;
+      }
+    }
+  }
+
+  // Content
+  .tour-tooltip-content {
+    padding: $spacing-md;
+
+    .MuiTypography-body1 {
+      color: $light-text;
+      line-height: 1.6;
+      margin-bottom: $spacing-sm;
+    }
+
+    .tour-tip {
+      background: rgba(74, 222, 128, 0.1);
+      border: 1px solid rgba(74, 222, 128, 0.3);
+      border-radius: 8px;
+      padding: $spacing-sm;
+      margin-top: $spacing-sm;
+
+      .tour-tip-icon {
+        color: $positive-color;
+        font-size: 1.2rem;
+        margin-right: $spacing-sm;
+        flex-shrink: 0;
+      }
+
+      .tour-tip-text {
+        color: rgba(255, 255, 255, 0.9);
+        font-size: 0.875rem;
+        line-height: 1.5;
+      }
+    }
+
+    .tour-spinner {
+      width: 20px;
+      height: 20px;
+      border: 2px solid rgba(255, 255, 255, 0.3);
+      border-top: 2px solid $positive-color;
+      border-radius: 50%;
+      animation: tourSpin 1s linear infinite;
+    }
+  }
+
+  // Actions
+  .tour-tooltip-actions {
+    padding: $spacing-sm $spacing-md $spacing-md;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+
+    .tour-skip-button {
+      color: rgba(255, 255, 255, 0.7);
+      text-transform: none;
+      font-weight: 500;
+
+      &:hover {
+        color: $light-text;
+        background: rgba(255, 255, 255, 0.05);
+      }
+    }
+
+    .tour-prev-button {
+      border-color: rgba(255, 255, 255, 0.3);
+      color: $light-text;
+      text-transform: none;
+      font-weight: 600;
+
+      &:hover {
+        border-color: rgba(255, 255, 255, 0.5);
+        background: rgba(255, 255, 255, 0.05);
+      }
+
+      &:disabled {
+        border-color: rgba(255, 255, 255, 0.1);
+        color: rgba(255, 255, 255, 0.3);
+      }
+    }
+
+    .tour-next-button {
+      background: linear-gradient(45deg, $positive-color, #06b6d4);
+      border: none;
+      color: white;
+      text-transform: none;
+      font-weight: 600;
+      box-shadow: 0 4px 16px rgba(74, 222, 128, 0.3);
+
+      &:hover {
+        background: linear-gradient(45deg, #22c55e, #0891b2);
+        box-shadow: 0 6px 20px rgba(74, 222, 128, 0.4);
+      }
+
+      &:disabled {
+        background: rgba(255, 255, 255, 0.1);
+        color: rgba(255, 255, 255, 0.3);
+        box-shadow: none;
+      }
+    }
+  }
+}
+
+// Mobile dialog
+.tour-mobile-dialog {
+  .MuiDialog-paper {
+    background: rgba(28, 35, 51, 0.98) !important;
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 16px !important;
+    color: $light-text;
+    margin: $spacing-md;
+
+    .MuiDialogContent-root {
+      color: $light-text;
+
+      .tour-tip {
+        background: rgba(74, 222, 128, 0.1);
+        border: 1px solid rgba(74, 222, 128, 0.3);
+        border-radius: 8px;
+        padding: $spacing-sm;
+
+        .tour-tip-icon {
+          color: $positive-color;
+          font-size: 1.2rem;
+          margin-right: $spacing-sm;
+        }
+
+        .tour-tip-text {
+          color: rgba(255, 255, 255, 0.9);
+          font-size: 0.875rem;
+        }
+      }
+    }
+
+    .MuiDialogActions-root {
+      padding: $spacing-md;
+      border-top: 1px solid rgba(255, 255, 255, 0.1);
+
+      .MuiButton-root {
+        text-transform: none;
+        font-weight: 600;
+      }
+
+      .MuiButton-contained {
+        background: linear-gradient(45deg, $positive-color, #06b6d4);
+        border: none;
+        box-shadow: 0 4px 16px rgba(74, 222, 128, 0.3);
+
+        &:hover {
+          background: linear-gradient(45deg, #22c55e, #0891b2);
+          box-shadow: 0 6px 20px rgba(74, 222, 128, 0.4);
+        }
+      }
+
+      .MuiButton-text {
+        color: rgba(255, 255, 255, 0.7);
+
+        &:hover {
+          color: $light-text;
+          background: rgba(255, 255, 255, 0.05);
+        }
+      }
+    }
+  }
+}
+
+// Animations
+@keyframes tourPulse {
+  0% {
+    box-shadow: 0 0 0 4px rgba(74, 222, 128, 0.6), 
+                0 0 0 8px rgba(74, 222, 128, 0.3),
+                0 0 20px rgba(74, 222, 128, 0.4);
+  }
+  50% {
+    box-shadow: 0 0 0 6px rgba(74, 222, 128, 0.8), 
+                0 0 0 12px rgba(74, 222, 128, 0.4),
+                0 0 30px rgba(74, 222, 128, 0.6);
+  }
+  100% {
+    box-shadow: 0 0 0 4px rgba(74, 222, 128, 0.6), 
+                0 0 0 8px rgba(74, 222, 128, 0.3),
+                0 0 20px rgba(74, 222, 128, 0.4);
+  }
+}
+
+@keyframes tourGlow {
+  0% {
+    opacity: 0.5;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.02);
+  }
+  100% {
+    opacity: 0.5;
+    transform: scale(1);
+  }
+}
+
+@keyframes tourSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes tourProgressGlow {
+  0% {
+    box-shadow: 0 0 5px rgba(74, 222, 128, 0.5);
+  }
+  50% {
+    box-shadow: 0 0 10px rgba(74, 222, 128, 0.8);
+  }
+  100% {
+    box-shadow: 0 0 5px rgba(74, 222, 128, 0.5);
+  }
+}
+
+@keyframes tourSpin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+// Responsive adjustments
+@media (max-width: 768px) {
+  .tour-tooltip {
+    max-width: 90vw;
+    min-width: 280px;
+    margin: $spacing-sm;
+
+    .tour-tooltip-header {
+      padding: $spacing-sm;
+
+      .tour-step-title {
+        font-size: 1.1rem;
+      }
+    }
+
+    .tour-tooltip-content {
+      padding: $spacing-sm;
+    }
+
+    .tour-tooltip-actions {
+      padding: $spacing-sm;
+      flex-direction: column;
+      gap: $spacing-sm;
+
+      .MuiBox-root {
+        width: 100%;
+        justify-content: space-between;
+      }
+
+      .tour-skip-button {
+        align-self: center;
+        margin-bottom: $spacing-sm;
+      }
+    }
+  }
+}
+
+@media (max-width: 480px) {
+  .tour-tooltip {
+    max-width: 95vw;
+    min-width: 260px;
+
+    .tour-tooltip-header {
+      .tour-progress-text {
+        font-size: 0.75rem;
+      }
+    }
+
+    .tour-tooltip-content {
+      .MuiTypography-body1 {
+        font-size: 0.875rem;
+      }
+
+      .tour-tip {
+        padding: $spacing-xs;
+
+        .tour-tip-text {
+          font-size: 0.8rem;
+        }
+      }
+    }
+
+    .tour-tooltip-actions {
+      .MuiButton-root {
+        font-size: 0.875rem;
+        padding: 6px 12px;
+      }
+    }
+  }
+}
+
+// High contrast mode support
+@media (prefers-contrast: high) {
+  .tour-tooltip {
+    border: 2px solid $light-text;
+    
+    .tour-tooltip-header {
+      border-bottom-color: $light-text;
+    }
+
+    .tour-tooltip-actions {
+      border-top-color: $light-text;
+    }
+  }
+
+  :global(.tour-highlight) {
+    box-shadow: 0 0 0 4px $positive-color, 
+                0 0 0 8px $light-text !important;
+  }
+}
+
+// Reduced motion support
+@media (prefers-reduced-motion: reduce) {
+  :global(.tour-highlight),
+  .tour-tooltip,
+  .tour-progress-fill,
+  .tour-spinner {
+    animation: none !important;
+  }
+
+  .tour-tooltip {
+    transition: none;
+  }
+}

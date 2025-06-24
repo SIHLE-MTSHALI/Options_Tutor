@@ -1,0 +1,452 @@
+@use '../styles/variables' as *;
+
+// Smart tooltip container
+.smart-tooltip {
+  background: rgba(28, 35, 51, 0.98) !important;
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 12px !important;
+  color: $light-text;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4) !important;
+  padding: 0 !important;
+  font-size: 0.875rem;
+
+  &.interactive {
+    cursor: pointer;
+  }
+
+  // Type-specific styling
+  &.info {
+    border-left: 4px solid #06b6d4;
+  }
+
+  &.help {
+    border-left: 4px solid $positive-color;
+  }
+
+  &.warning {
+    border-left: 4px solid $warning-color;
+  }
+
+  &.error {
+    border-left: 4px solid $negative-color;
+  }
+
+  &.success {
+    border-left: 4px solid $positive-color;
+  }
+
+  &.tip {
+    border-left: 4px solid #8b5cf6;
+  }
+}
+
+// Tooltip content
+.smart-tooltip-content {
+  padding: 0;
+  max-width: 100%;
+
+  // Header
+  .tooltip-header {
+    padding: $spacing-sm $spacing-md;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.02);
+
+    .tooltip-icon {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      font-size: 0.875rem;
+
+      &.info {
+        background: rgba(6, 182, 212, 0.2);
+        color: #06b6d4;
+      }
+
+      &.help {
+        background: rgba(74, 222, 128, 0.2);
+        color: $positive-color;
+      }
+
+      &.warning {
+        background: rgba(251, 191, 36, 0.2);
+        color: $warning-color;
+      }
+
+      &.error {
+        background: rgba(248, 113, 113, 0.2);
+        color: $negative-color;
+      }
+
+      &.success {
+        background: rgba(74, 222, 128, 0.2);
+        color: $positive-color;
+      }
+
+      &.tip {
+        background: rgba(139, 92, 246, 0.2);
+        color: #8b5cf6;
+      }
+    }
+
+    .tooltip-title {
+      color: $light-text;
+      font-weight: 600;
+      margin: 0;
+    }
+
+    .category-chip {
+      font-size: 0.75rem;
+      height: 20px;
+
+      &.MuiChip-colorSuccess {
+        border-color: $positive-color;
+        color: $positive-color;
+        background: rgba(74, 222, 128, 0.1);
+      }
+
+      &.MuiChip-colorWarning {
+        border-color: $warning-color;
+        color: $warning-color;
+        background: rgba(251, 191, 36, 0.1);
+      }
+
+      &.MuiChip-colorError {
+        border-color: $negative-color;
+        color: $negative-color;
+        background: rgba(248, 113, 113, 0.1);
+      }
+    }
+
+    .close-button {
+      color: rgba(255, 255, 255, 0.7);
+      padding: 2px;
+
+      &:hover {
+        color: $light-text;
+        background: rgba(255, 255, 255, 0.1);
+      }
+    }
+  }
+
+  // Body
+  .tooltip-body {
+    padding: $spacing-md;
+
+    .tooltip-description {
+      color: $light-text;
+      line-height: 1.5;
+      margin-bottom: 0;
+    }
+
+    .shortcut-chip {
+      background: rgba(255, 255, 255, 0.1);
+      border-color: rgba(255, 255, 255, 0.3);
+      color: $light-text;
+      font-family: 'Courier New', monospace;
+      font-size: 0.75rem;
+      font-weight: 600;
+    }
+
+    .examples-list {
+      margin: 4px 0 0 16px;
+      padding: 0;
+
+      li {
+        margin-bottom: 2px;
+        color: rgba(255, 255, 255, 0.8);
+      }
+    }
+
+    .related-chip {
+      background: rgba(255, 255, 255, 0.05);
+      border-color: rgba(255, 255, 255, 0.2);
+      color: rgba(255, 255, 255, 0.8);
+      font-size: 0.75rem;
+      transition: all 0.2s ease;
+
+      &:hover {
+        background: rgba(255, 255, 255, 0.1);
+        border-color: $positive-color;
+        color: $positive-color;
+      }
+    }
+  }
+
+  // Actions
+  .tooltip-actions {
+    padding: $spacing-sm $spacing-md;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.02);
+
+    .demo-button {
+      background: rgba(74, 222, 128, 0.1);
+      border: 1px solid rgba(74, 222, 128, 0.3);
+      color: $positive-color;
+      text-transform: none;
+      font-weight: 600;
+      font-size: 0.75rem;
+
+      &:hover {
+        background: rgba(74, 222, 128, 0.2);
+        border-color: $positive-color;
+      }
+    }
+
+    .learn-more-button {
+      color: rgba(255, 255, 255, 0.8);
+      text-transform: none;
+      font-weight: 500;
+      font-size: 0.75rem;
+
+      &:hover {
+        color: $light-text;
+        background: rgba(255, 255, 255, 0.05);
+      }
+    }
+  }
+}
+
+// Tooltip trigger
+.smart-tooltip-trigger {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  cursor: help;
+
+  .smart-tooltip-indicator {
+    margin-left: 4px;
+    font-size: 0.875rem;
+    opacity: 0.7;
+    transition: opacity 0.2s ease;
+
+    &:hover {
+      opacity: 1;
+    }
+
+    &.info {
+      color: #06b6d4;
+    }
+
+    &.help {
+      color: $positive-color;
+    }
+
+    &.warning {
+      color: $warning-color;
+    }
+
+    &.error {
+      color: $negative-color;
+    }
+
+    &.success {
+      color: $positive-color;
+    }
+
+    &.tip {
+      color: #8b5cf6;
+    }
+  }
+}
+
+// Help tooltip button
+.help-tooltip-button {
+  color: rgba(255, 255, 255, 0.6);
+  padding: 4px;
+  margin-left: 4px;
+
+  &:hover {
+    color: $positive-color;
+    background: rgba(74, 222, 128, 0.1);
+  }
+
+  .MuiSvgIcon-root {
+    font-size: 1rem;
+  }
+}
+
+// Inline help button
+.inline-help-button {
+  color: rgba(255, 255, 255, 0.7);
+  text-transform: none;
+  font-weight: 500;
+  font-size: 0.75rem;
+  padding: 2px 8px;
+  min-width: auto;
+
+  &:hover {
+    color: $positive-color;
+    background: rgba(74, 222, 128, 0.1);
+  }
+
+  .MuiSvgIcon-root {
+    font-size: 0.875rem;
+  }
+}
+
+// Feature highlight
+.feature-highlight {
+  position: relative;
+  transition: all 0.3s ease;
+
+  &.active {
+    &::before {
+      content: '';
+      position: absolute;
+      top: -4px;
+      left: -4px;
+      right: -4px;
+      bottom: -4px;
+      border: 2px solid $positive-color;
+      border-radius: 8px;
+      animation: featureGlow 2s infinite;
+      pointer-events: none;
+      z-index: -1;
+    }
+
+    &::after {
+      content: '';
+      position: absolute;
+      top: -2px;
+      left: -2px;
+      right: -2px;
+      bottom: -2px;
+      background: rgba(74, 222, 128, 0.1);
+      border-radius: 6px;
+      pointer-events: none;
+      z-index: -1;
+    }
+  }
+}
+
+// Tooltip popper
+.smart-tooltip-popper {
+  z-index: 1500 !important;
+
+  .MuiTooltip-arrow {
+    color: rgba(28, 35, 51, 0.98);
+  }
+}
+
+// Animations
+@keyframes featureGlow {
+  0% {
+    opacity: 0.5;
+    box-shadow: 0 0 5px rgba(74, 222, 128, 0.3);
+  }
+  50% {
+    opacity: 1;
+    box-shadow: 0 0 15px rgba(74, 222, 128, 0.6);
+  }
+  100% {
+    opacity: 0.5;
+    box-shadow: 0 0 5px rgba(74, 222, 128, 0.3);
+  }
+}
+
+// Responsive design
+@media (max-width: 768px) {
+  .smart-tooltip {
+    max-width: 90vw !important;
+    font-size: 0.8rem;
+  }
+
+  .smart-tooltip-content {
+    .tooltip-header {
+      padding: $spacing-xs $spacing-sm;
+
+      .tooltip-title {
+        font-size: 0.875rem;
+      }
+
+      .category-chip {
+        font-size: 0.7rem;
+        height: 18px;
+      }
+    }
+
+    .tooltip-body {
+      padding: $spacing-sm;
+
+      .tooltip-description {
+        font-size: 0.8rem;
+      }
+    }
+
+    .tooltip-actions {
+      padding: $spacing-xs $spacing-sm;
+
+      .MuiButton-root {
+        font-size: 0.7rem;
+        padding: 4px 8px;
+      }
+    }
+  }
+
+  .help-tooltip-button {
+    padding: 2px;
+
+    .MuiSvgIcon-root {
+      font-size: 0.875rem;
+    }
+  }
+}
+
+@media (max-width: 480px) {
+  .smart-tooltip {
+    max-width: 95vw !important;
+  }
+
+  .smart-tooltip-content {
+    .tooltip-header {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 4px;
+    }
+
+    .tooltip-body {
+      .examples-list {
+        margin-left: 12px;
+      }
+
+      .related-chip {
+        font-size: 0.7rem;
+      }
+    }
+  }
+}
+
+// High contrast mode
+@media (prefers-contrast: high) {
+  .smart-tooltip {
+    border: 2px solid $light-text;
+    background: $dark-bg !important;
+  }
+
+  .smart-tooltip-content {
+    .tooltip-header {
+      border-bottom-color: $light-text;
+    }
+
+    .tooltip-actions {
+      border-top-color: $light-text;
+    }
+  }
+}
+
+// Reduced motion
+@media (prefers-reduced-motion: reduce) {
+  .feature-highlight,
+  .smart-tooltip-indicator,
+  .help-tooltip-button {
+    transition: none;
+  }
+
+  .feature-highlight.active::before {
+    animation: none;
+  }
+}

@@ -1,0 +1,599 @@
+@use '../styles/variables' as *;
+
+.modern-trading-dashboard {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+  color: $light-text;
+  overflow: hidden;
+
+  // App Bar Styles
+  .app-bar {
+    background: rgba(28, 35, 51, 0.95) !important;
+    backdrop-filter: blur(10px);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    z-index: 1300 !important;
+
+    .app-title {
+      font-weight: 700;
+      background: linear-gradient(45deg, #4ade80, #06b6d4);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .market-status {
+      background: rgba(74, 222, 128, 0.1) !important;
+      border-color: $positive-color !important;
+      color: $positive-color !important;
+
+      .status-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        margin-right: 4px;
+
+        &.active {
+          background-color: $positive-color;
+          box-shadow: 0 0 6px $positive-color;
+          animation: pulse 2s infinite;
+        }
+      }
+    }
+  }
+
+  // Sidebar Styles
+  .sidebar {
+    .MuiDrawer-paper {
+      width: 280px;
+      background: rgba(28, 35, 51, 0.98) !important;
+      backdrop-filter: blur(20px);
+      border-right: 1px solid rgba(255, 255, 255, 0.1);
+      color: $light-text;
+    }
+
+    .sidebar-content {
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .sidebar-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: $spacing-md;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+
+      h6 {
+        margin: 0;
+        font-weight: 600;
+      }
+    }
+
+    .MuiListItem-root {
+      margin: 4px 8px;
+      border-radius: 8px;
+      transition: all 0.2s ease;
+
+      &:hover {
+        background: rgba(74, 222, 128, 0.1);
+        transform: translateX(4px);
+      }
+
+      &.Mui-selected {
+        background: linear-gradient(45deg, rgba(74, 222, 128, 0.2), rgba(6, 182, 212, 0.2));
+        border-left: 3px solid $positive-color;
+
+        .MuiListItemIcon-root {
+          color: $positive-color;
+        }
+
+        .MuiListItemText-primary {
+          color: $positive-color;
+          font-weight: 600;
+        }
+      }
+    }
+
+    .MuiListItemIcon-root {
+      color: rgba(255, 255, 255, 0.7);
+      min-width: 40px;
+    }
+
+    .MuiListItemText-primary {
+      color: $light-text;
+      font-weight: 500;
+    }
+
+    .MuiListItemText-secondary {
+      color: rgba(255, 255, 255, 0.6);
+      font-size: 0.75rem;
+    }
+
+    .user-progress {
+      margin-top: auto;
+      padding: $spacing-md;
+      border-top: 1px solid rgba(255, 255, 255, 0.1);
+
+      .MuiLinearProgress-root {
+        background-color: rgba(255, 255, 255, 0.1);
+        border-radius: 4px;
+
+        .MuiLinearProgress-bar {
+          background: linear-gradient(45deg, $positive-color, #06b6d4);
+        }
+      }
+    }
+  }
+
+  // Main Content Styles
+  .main-content {
+    flex: 1;
+    padding: 80px 24px 24px;
+    overflow-y: auto;
+    background: transparent;
+
+    // Custom scrollbar
+    &::-webkit-scrollbar {
+      width: 8px;
+    }
+
+    &::-webkit-scrollbar-track {
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 4px;
+    }
+
+    &::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.3);
+      border-radius: 4px;
+
+      &:hover {
+        background: rgba(255, 255, 255, 0.5);
+      }
+    }
+  }
+
+  // Dashboard Overview Styles
+  .dashboard-overview {
+    .stats-overview {
+      background: rgba(28, 35, 51, 0.8) !important;
+      backdrop-filter: blur(20px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 16px !important;
+      padding: $spacing-lg;
+
+      h6 {
+        color: $light-text;
+        font-weight: 600;
+        margin-bottom: $spacing-md;
+      }
+    }
+
+    .stat-card {
+      background: rgba(255, 255, 255, 0.05) !important;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 12px !important;
+      transition: all 0.3s ease;
+
+      &:hover {
+        background: rgba(255, 255, 255, 0.08) !important;
+        transform: translateY(-2px);
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+      }
+
+      .MuiCardContent-root {
+        padding: $spacing-md !important;
+
+        .MuiTypography-h5 {
+          color: $light-text;
+          font-weight: 700;
+          margin: 8px 0;
+        }
+
+        .MuiTypography-body2 {
+          font-size: 0.875rem;
+        }
+      }
+    }
+
+    .quick-actions,
+    .recent-activity {
+      background: rgba(28, 35, 51, 0.8) !important;
+      backdrop-filter: blur(20px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 16px !important;
+      padding: $spacing-lg;
+
+      h6 {
+        color: $light-text;
+        font-weight: 600;
+        margin-bottom: $spacing-md;
+      }
+
+      .MuiButton-contained {
+        background: linear-gradient(45deg, $positive-color, #06b6d4);
+        border: none;
+        border-radius: 8px;
+        font-weight: 600;
+        text-transform: none;
+        box-shadow: 0 4px 16px rgba(74, 222, 128, 0.3);
+
+        &:hover {
+          background: linear-gradient(45deg, #22c55e, #0891b2);
+          box-shadow: 0 6px 20px rgba(74, 222, 128, 0.4);
+        }
+      }
+
+      .MuiButton-outlined {
+        border-color: rgba(255, 255, 255, 0.3);
+        color: $light-text;
+        border-radius: 8px;
+        font-weight: 600;
+        text-transform: none;
+
+        &:hover {
+          border-color: $positive-color;
+          background: rgba(74, 222, 128, 0.1);
+        }
+      }
+    }
+
+    .recent-activity {
+      .MuiListItem-root {
+        border-radius: 8px;
+        margin-bottom: 4px;
+
+        &:hover {
+          background: rgba(255, 255, 255, 0.05);
+        }
+      }
+
+      .MuiListItemText-primary {
+        color: $light-text;
+        font-weight: 500;
+      }
+
+      .MuiListItemText-secondary {
+        color: rgba(255, 255, 255, 0.7);
+      }
+
+      .MuiChip-root {
+        font-weight: 600;
+
+        &.MuiChip-colorSuccess {
+          background: rgba(74, 222, 128, 0.2);
+          color: $positive-color;
+        }
+
+        &.MuiChip-colorError {
+          background: rgba(248, 113, 113, 0.2);
+          color: $negative-color;
+        }
+      }
+    }
+  }
+
+  // Trading View Styles
+  .trading-view {
+    .chart-container,
+    .strategy-container {
+      background: rgba(28, 35, 51, 0.8) !important;
+      backdrop-filter: blur(20px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 16px !important;
+      padding: $spacing-lg;
+      height: calc(100vh - 140px);
+    }
+  }
+
+  // Learning View Styles
+  .learning-view {
+    .MuiPaper-root {
+      background: rgba(28, 35, 51, 0.8) !important;
+      backdrop-filter: blur(20px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 16px !important;
+      padding: $spacing-lg;
+    }
+  }
+
+  // Analysis View Styles
+  .analysis-view {
+    .MuiPaper-root {
+      background: rgba(28, 35, 51, 0.8) !important;
+      backdrop-filter: blur(20px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 16px !important;
+      padding: $spacing-lg;
+      height: calc(100vh - 140px);
+    }
+  }
+
+  // Portfolio View Styles
+  .portfolio-view {
+    .MuiPaper-root {
+      background: rgba(28, 35, 51, 0.8) !important;
+      backdrop-filter: blur(20px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 16px !important;
+      padding: $spacing-lg;
+      height: calc(100vh - 140px);
+    }
+  }
+
+  // Dialog Styles
+  .MuiDialog-paper {
+    background: rgba(28, 35, 51, 0.95) !important;
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 16px !important;
+    color: $light-text;
+
+    .MuiDialogTitle-root {
+      color: $light-text;
+      font-weight: 600;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .MuiDialogContent-root {
+      color: $light-text;
+    }
+
+    .MuiStep-root {
+      .MuiStepLabel-label {
+        color: rgba(255, 255, 255, 0.7);
+
+        &.Mui-active {
+          color: $positive-color;
+        }
+
+        &.Mui-completed {
+          color: $positive-color;
+        }
+      }
+
+      .MuiStepIcon-root {
+        color: rgba(255, 255, 255, 0.3);
+
+        &.Mui-active {
+          color: $positive-color;
+        }
+
+        &.Mui-completed {
+          color: $positive-color;
+        }
+      }
+    }
+
+    .MuiCard-root {
+      background: rgba(255, 255, 255, 0.05) !important;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 12px !important;
+
+      .MuiCardContent-root {
+        .MuiTypography-h6 {
+          color: $light-text;
+        }
+
+        .MuiTypography-body2 {
+          color: rgba(255, 255, 255, 0.7);
+        }
+      }
+    }
+  }
+
+  // Notifications Panel
+  .notifications-panel {
+    width: 320px;
+    height: 100%;
+    background: rgba(28, 35, 51, 0.98);
+    backdrop-filter: blur(20px);
+
+    .notifications-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: $spacing-md;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+
+      h6 {
+        margin: 0;
+        color: $light-text;
+        font-weight: 600;
+      }
+    }
+
+    .notification-item {
+      border-left: 3px solid transparent;
+      margin: 4px 8px;
+      border-radius: 8px;
+      transition: all 0.2s ease;
+
+      &:hover {
+        background: rgba(255, 255, 255, 0.05);
+      }
+
+      &.info {
+        border-left-color: #06b6d4;
+      }
+
+      &.success {
+        border-left-color: $positive-color;
+      }
+
+      &.warning {
+        border-left-color: $warning-color;
+      }
+
+      &.error {
+        border-left-color: $negative-color;
+      }
+
+      .MuiListItemText-primary {
+        color: $light-text;
+        font-weight: 500;
+      }
+
+      .MuiListItemText-secondary {
+        color: rgba(255, 255, 255, 0.7);
+      }
+    }
+  }
+
+  // Floating Action Button
+  .help-fab {
+    position: fixed !important;
+    bottom: 24px;
+    right: 24px;
+    background: linear-gradient(45deg, $positive-color, #06b6d4) !important;
+    box-shadow: 0 8px 32px rgba(74, 222, 128, 0.3) !important;
+    z-index: 1000;
+
+    &:hover {
+      background: linear-gradient(45deg, #22c55e, #0891b2) !important;
+      box-shadow: 0 12px 40px rgba(74, 222, 128, 0.4) !important;
+      transform: scale(1.05);
+    }
+
+    .MuiSvgIcon-root {
+      animation: pulse 2s infinite;
+    }
+  }
+
+  // Animations
+  @keyframes pulse {
+    0% {
+      opacity: 1;
+    }
+    50% {
+      opacity: 0.7;
+    }
+    100% {
+      opacity: 1;
+    }
+  }
+
+  @keyframes slideInUp {
+    from {
+      transform: translateY(30px);
+      opacity: 0;
+    }
+    to {
+      transform: translateY(0);
+      opacity: 1;
+    }
+  }
+
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+
+  // Responsive Design
+  @media (max-width: 768px) {
+    .main-content {
+      padding: 80px 16px 16px;
+    }
+
+    .dashboard-overview {
+      .stat-card {
+        margin-bottom: $spacing-sm;
+      }
+    }
+
+    .sidebar {
+      .MuiDrawer-paper {
+        width: 100%;
+      }
+    }
+
+    .help-fab {
+      bottom: 16px !important;
+      right: 16px !important;
+    }
+  }
+
+  @media (max-width: 480px) {
+    .app-bar {
+      .app-title {
+        font-size: 1.1rem;
+      }
+
+      .market-status {
+        display: none;
+      }
+    }
+
+    .dashboard-overview {
+      .stats-overview {
+        padding: $spacing-md;
+      }
+
+      .stat-card {
+        .MuiCardContent-root {
+          padding: $spacing-sm !important;
+        }
+
+        .MuiTypography-h5 {
+          font-size: 1.25rem;
+        }
+      }
+    }
+  }
+
+  // Dark theme overrides for Material-UI components
+  .MuiButton-root {
+    text-transform: none;
+    font-weight: 600;
+  }
+
+  .MuiPaper-root {
+    color: $light-text;
+  }
+
+  .MuiTypography-root {
+    color: inherit;
+  }
+
+  .MuiIconButton-root {
+    color: rgba(255, 255, 255, 0.7);
+
+    &:hover {
+      color: $light-text;
+      background: rgba(255, 255, 255, 0.1);
+    }
+  }
+
+  .MuiChip-root {
+    background: rgba(255, 255, 255, 0.1);
+    color: $light-text;
+  }
+
+  .MuiBadge-badge {
+    background: $negative-color;
+    color: white;
+  }
+
+  .MuiLinearProgress-root {
+    background-color: rgba(255, 255, 255, 0.1);
+  }
+
+  // Tooltip styles
+  .MuiTooltip-tooltip {
+    background: rgba(28, 35, 51, 0.95);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: $light-text;
+    font-size: 0.875rem;
+  }
+
+  .MuiTooltip-arrow {
+    color: rgba(28, 35, 51, 0.95);
+  }
+}
