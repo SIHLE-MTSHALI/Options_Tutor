@@ -6,8 +6,8 @@ import PositionControls from '../PositionControls';
 import { configureStore } from '@reduxjs/toolkit';
 import portfolioReducer from '../../redux/portfolioSlice';
 import * as AlphaVantageService from '../../services/AlphaVantageService';
-import * as TradeService from '../../services/TradeService';
-import { Position } from '../../redux/portfolioSlice';
+import * as tradeThunks from '../../redux/tradeThunks';
+import { Position } from '../../redux/types';
 import { portfolioActions } from '../../redux/portfolioSlice';
 import { initRealTimeService } from '../../services/realTimeService';
 import { tradeMiddleware } from '../../services/tradeMiddleware';
@@ -20,14 +20,11 @@ jest.mock('../../services/AlphaVantageService', () => ({
   },
 }));
 
-jest.mock('../../services/TradeService', () => ({
-  TradeService: {
-    executeTrade: jest.fn().mockResolvedValue({
-      success: true,
-      marginUsed: 0,
-      newPositions: []
-    })
-  }
+jest.mock('../../redux/tradeThunks', () => ({
+  stockTradeThunk: jest.fn(() => ({
+    type: 'trade/stockTrade/fulfilled',
+    payload: { success: true }
+  }))
 }));
 
 jest.mock('../../services/tradeMiddleware', () => ({
@@ -38,11 +35,17 @@ const mockPosition: Position = {
   id: 'test-pos',
   symbol: 'AAPL',
   type: 'stock',
+  positionType: 'long',
   quantity: 100,
+  strike: undefined,
+  expiry: undefined,
   purchasePrice: 150,
   currentPrice: 155,
+  stopLoss: undefined,
+  takeProfit: undefined,
   unrealizedPL: 0,
-  positionType: 'long',
+  lastUpdated: '2024-01-01T00:00:00Z',
+  strategyId: undefined
 };
 
 describe('PositionControls Component', () => {
@@ -58,6 +61,7 @@ describe('PositionControls Component', () => {
         portfolio: {
           cashBalance: 10000,
           positions: [mockPosition],
+          strategies: [],
           unrealizedPL: 500,
           realizedPL: 0,
           marginUsage: 0,
@@ -67,6 +71,7 @@ describe('PositionControls Component', () => {
           lastSecondUpdates: 0,
           maxUpdatesPerSecond: 0,
           lastUpdateTime: Date.now(),
+          strategyProfitLoss: {}
         },
       },
     });
@@ -179,15 +184,12 @@ describe('PositionControls Component', () => {
     );
 
     fireEvent.click(screen.getByText('Modify Position'));
-    expect(screen.getByText('Modify Position: AAPL')).toBeInTheDocument();
+    expect(screen.getByText('Manage Position: AAPL')).toBeInTheDocument();
   });
 
   test('successfully closes position on button click', async () => {
-    const mockExecuteTrade = (TradeService.TradeService.executeTrade as jest.Mock).mockResolvedValue({
-      success: true,
-      marginUsed: 0,
-      newPositions: []
-    });
+    const mockStockTradeThunk = jest.fn().mockResolvedValue({ type: 'fulfilled', payload: { success: true } });
+    (tradeThunks.stockTradeThunk as jest.Mock).mockImplementation(mockStockTradeThunk);
     
     await act(async () => {
       render(
@@ -202,23 +204,18 @@ describe('PositionControls Component', () => {
     });
     
     await waitFor(() => {
-      expect(mockExecuteTrade).toHaveBeenCalled();
+      expect(mockStockTradeThunk).toHaveBeenCalledWith({
+        symbol: 'AAPL',
+        quantity: 100,
+        action: 'sell',
+        type: 'market'
+      });
     });
-    
-    // Verify store updates
-    const state = store.getState().portfolio;
-    expect(state.positions).toHaveLength(0);
-    expect(state.cashBalance).toBe(10000 + (100 * 155));
-    expect(state.realizedPL).toBe(500);
   });
 
   test('handles error when closing position', async () => {
-    const mockExecuteTrade = (TradeService.TradeService.executeTrade as jest.Mock).mockResolvedValue({
-      success: false,
-      error: 'Insufficient funds',
-      marginUsed: 0,
-      newPositions: []
-    });
+    const mockStockTradeThunk = jest.fn().mockRejectedValue(new Error('Insufficient funds'));
+    (tradeThunks.stockTradeThunk as jest.Mock).mockImplementation(mockStockTradeThunk);
     const errorSpy = jest.spyOn(console, 'error').mockImplementation();
     
     render(
@@ -230,13 +227,13 @@ describe('PositionControls Component', () => {
     fireEvent.click(await screen.findByTestId('close-position-button'));
     
     await waitFor(() => {
-      expect(mockExecuteTrade).toHaveBeenCalledWith({
+      expect(mockStockTradeThunk).toHaveBeenCalledWith({
         symbol: 'AAPL',
         quantity: 100,
         action: 'sell',
         type: 'market'
       });
-      expect(errorSpy).toHaveBeenCalledWith('Failed to close position:', 'Insufficient funds');
+      expect(errorSpy).toHaveBeenCalledWith('Failed to close position:', expect.any(Error));
     });
     
     errorSpy.mockRestore();

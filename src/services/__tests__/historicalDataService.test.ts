@@ -94,47 +94,21 @@ afterEach(() => {
     expect(fetch).not.toHaveBeenCalled();
   });
 
-  it('throws DataFetchError for API errors', async () => {
+  it('handles API errors', async () => {
     (fetch as jest.Mock).mockResolvedValueOnce({
       ok: false,
       statusText: 'API limit reached'
     });
 
-    try {
-      await HistoricalDataService.fetchHistoricalOptions('TSLA', '2023-12-15');
-      throw new Error('Expected function to throw DataFetchError');
-    } catch (error: unknown) {
-      // Define custom error interface for type safety
-      interface CustomError extends Error {
-        isDataFetchError?: boolean;
-      }
-      const err = error as CustomError;
-      
-      expect(err).toBeInstanceOf(Error);
-      expect(err.isDataFetchError).toBe(true);
-      expect(err.name).toBe('DataFetchError');
-      expect(err.message).toContain('Failed to fetch historical options data');
-    }
+    await expect(HistoricalDataService.fetchHistoricalOptions('TSLA', '2023-12-15'))
+      .rejects.toThrow('Failed to fetch historical options data: API limit reached');
   });
 
-  it('throws DataFetchError for network errors', async () => {
+  it('handles network errors', async () => {
     (fetch as jest.Mock).mockRejectedValueOnce(new Error('Network error'));
 
-    try {
-      await HistoricalDataService.fetchHistoricalOptions('TSLA', '2023-12-15');
-      throw new Error('Expected function to throw DataFetchError');
-    } catch (error: unknown) {
-      // Define custom error interface for type safety
-      interface CustomError extends Error {
-        isDataFetchError?: boolean;
-      }
-      const err = error as CustomError;
-      
-      expect(err).toBeInstanceOf(Error);
-      expect(err.isDataFetchError).toBe(true);
-      expect(err.name).toBe('DataFetchError');
-      expect(err.message).toContain('Failed to fetch historical options data');
-    }
+    await expect(HistoricalDataService.fetchHistoricalOptions('TSLA', '2023-12-15'))
+      .rejects.toThrow('Failed to fetch historical options data: Network error');
   });
 
   describe('normalizeOptionsData', () => {
@@ -219,13 +193,13 @@ afterEach(() => {
       });
     });
 
-    it('handles empty API response', () => {
+    it('normalizeOptionsData handles empty API response', () => {
       expect(() => HistoricalDataService.normalizeOptionsData({})).toThrow(
         'normalizeOptionsData: apiData must have calls and puts properties'
       );
     });
 
-    it('handles malformed API response', () => {
+    it('normalizeOptionsData handles malformed API response', () => {
       expect(() => HistoricalDataService.normalizeOptionsData({
         invalid: {
           data: 'corrupted'

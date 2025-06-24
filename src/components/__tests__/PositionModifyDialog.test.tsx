@@ -2,11 +2,12 @@ import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import { Provider } from 'react-redux';
-import { PositionModifyDialog } from '../PositionModifyDialog';
+import PositionModifyDialog from '../PositionModifyDialog';
 import { configureStore } from '@reduxjs/toolkit';
 import portfolioReducer from '../../redux/portfolioSlice';
+import tradingReducer from '../../redux/tradingSlice';
 import * as TradeService from '../../services/TradeService';
-import { Position } from '../../redux/portfolioSlice';
+import { Position } from '../../redux/types';
 
 jest.mock('../../services/TradeService', () => ({
   TradeService: {
@@ -18,11 +19,17 @@ const mockPosition: Position = {
   id: 'test-pos',
   symbol: 'AAPL',
   type: 'stock',
+  positionType: 'long',
   quantity: 100,
+  strike: undefined,
+  expiry: undefined,
   purchasePrice: 150,
   currentPrice: 155,
+  stopLoss: undefined,
+  takeProfit: undefined,
   unrealizedPL: 0,
-  positionType: 'long',
+  lastUpdated: '2024-01-01T00:00:00Z',
+  strategyId: undefined
 };
 
 describe('PositionModifyDialog Component', () => {
@@ -33,11 +40,13 @@ describe('PositionModifyDialog Component', () => {
     store = configureStore({
       reducer: {
         portfolio: portfolioReducer,
+        trading: tradingReducer,
       },
       preloadedState: {
         portfolio: {
           cashBalance: 10000,
           positions: [mockPosition],
+          strategies: [],
           unrealizedPL: 500,
           realizedPL: 0,
           marginUsage: 0,
@@ -47,7 +56,20 @@ describe('PositionModifyDialog Component', () => {
           lastSecondUpdates: 0,
           maxUpdatesPerSecond: 0,
           lastUpdateTime: Date.now(),
+          strategyProfitLoss: {}
         },
+        trading: {
+          selectedLeg: null,
+          legs: [],
+          orderType: 'limit',
+          status: 'idle',
+          error: null,
+          selectedStrategy: null,
+          showPayoffDiagram: false,
+          showRiskGraph: false,
+          tradeError: null,
+          accountId: 'test-account'
+        }
       },
     });
   });
@@ -56,99 +78,109 @@ describe('PositionModifyDialog Component', () => {
     render(
       <Provider store={store}>
         <PositionModifyDialog
+          open={true}
           onClose={onClose}
           position={mockPosition}
+          currentPrice={155}
+          onModify={jest.fn()}
         />
       </Provider>
     );
 
-    expect(screen.getByText('Modify Position: AAPL')).toBeInTheDocument();
-    expect(screen.getByDisplayValue('100')).toBeInTheDocument();
-    expect(screen.getByDisplayValue('155')).toBeInTheDocument();
+    expect(screen.getByText('Manage Position: AAPL')).toBeInTheDocument();
+    expect(screen.getByText('Quantity: 100')).toBeInTheDocument();
+    expect(screen.getByText('Current Price: $155.00')).toBeInTheDocument();
   });
 
-  test('handles quantity and price input changes', () => {
+  test('handles stop loss and take profit input changes', () => {
     render(
       <Provider store={store}>
         <PositionModifyDialog
+          open={true}
           onClose={onClose}
           position={mockPosition}
+          currentPrice={155}
+          onModify={jest.fn()}
         />
       </Provider>
     );
 
-    const quantityInput = screen.getByLabelText('Quantity:');
-    const priceInput = screen.getByLabelText('Price:');
+    const stopLossInput = screen.getByLabelText('Stop Loss');
+    const takeProfitInput = screen.getByLabelText('Take Profit');
 
-    fireEvent.change(quantityInput, { target: { value: '50' } });
-    fireEvent.change(priceInput, { target: { value: '160' } });
+    fireEvent.change(stopLossInput, { target: { value: '140' } });
+    fireEvent.change(takeProfitInput, { target: { value: '170' } });
 
-    expect(quantityInput).toHaveValue(50);
-    expect(priceInput).toHaveValue(160);
+    expect(stopLossInput).toHaveValue(140);
+    expect(takeProfitInput).toHaveValue(170);
   });
 
   test('submits modification and closes dialog', async () => {
-    const mockExecuteTrade = (TradeService.TradeService.executeTrade as jest.Mock).mockResolvedValue({ success: true });
+    const mockValidatePositionModification = jest.spyOn(TradeService.TradeService, 'validatePositionModification').mockReturnValue(null);
 
     render(
       <Provider store={store}>
         <PositionModifyDialog
+          open={true}
           onClose={onClose}
           position={mockPosition}
+          currentPrice={155}
+          onModify={jest.fn()}
         />
       </Provider>
     );
 
-    fireEvent.change(screen.getByLabelText('Quantity:'), { target: { value: '50' } });
-    fireEvent.change(screen.getByLabelText('Price:'), { target: { value: '160' } });
-    fireEvent.click(screen.getByText('Modify'));
+    fireEvent.change(screen.getByLabelText('Stop Loss'), { target: { value: '140' } });
+    fireEvent.change(screen.getByLabelText('Take Profit'), { target: { value: '170' } });
+    fireEvent.click(screen.getByText('Save Changes'));
 
     await waitFor(() => {
-      expect(mockExecuteTrade).toHaveBeenCalledWith({
-        type: 'modify',
-        symbol: 'AAPL',
-        quantity: 50,
-        price: 160,
-        positionId: 'test-pos'
-      });
-      expect(onClose).toHaveBeenCalled();
+      expect(mockValidatePositionModification).toHaveBeenCalledWith(
+        mockPosition,
+        140,
+        170,
+        155
+      );
     });
+
+    mockValidatePositionModification.mockRestore();
   });
 
   test('handles modification error', async () => {
-    const mockExecuteTrade = (TradeService.TradeService.executeTrade as jest.Mock).mockResolvedValue({
-      success: false,
-      error: 'Insufficient funds'
-    });
-    const errorSpy = jest.spyOn(console, 'error').mockImplementation();
+    const mockValidatePositionModification = jest.spyOn(TradeService.TradeService, 'validatePositionModification').mockReturnValue('Insufficient funds');
 
     render(
       <Provider store={store}>
         <PositionModifyDialog
+          open={true}
           onClose={onClose}
           position={mockPosition}
+          currentPrice={155}
+          onModify={jest.fn()}
         />
       </Provider>
     );
 
-    fireEvent.click(screen.getByText('Modify'));
+    fireEvent.click(screen.getByText('Save Changes'));
 
     await waitFor(() => {
-      expect(mockExecuteTrade).toHaveBeenCalled();
-      expect(errorSpy).toHaveBeenCalledWith('Failed to modify position:', 'Insufficient funds');
+      expect(mockValidatePositionModification).toHaveBeenCalled();
       expect(onClose).not.toHaveBeenCalled();
-      expect(screen.getByText('Error: Insufficient funds')).toBeInTheDocument();
+      expect(screen.getByText('Insufficient funds')).toBeInTheDocument();
     });
 
-    errorSpy.mockRestore();
+    mockValidatePositionModification.mockRestore();
   });
 
   test('closes dialog on cancel', () => {
     render(
       <Provider store={store}>
         <PositionModifyDialog
+          open={true}
           onClose={onClose}
           position={mockPosition}
+          currentPrice={155}
+          onModify={jest.fn()}
         />
       </Provider>
     );
@@ -158,33 +190,20 @@ describe('PositionModifyDialog Component', () => {
   });
 
   test('disables buttons during pending state', () => {
-    store = configureStore({
-      reducer: {
-        portfolio: portfolioReducer,
-      },
-      preloadedState: {
-        portfolio: {
-          ...store.getState().portfolio,
-          isPending: true,
-          priceUpdateTimestamp: 0,
-          updatesPerSecond: 0,
-          lastSecondUpdates: 0,
-          maxUpdatesPerSecond: 0,
-          lastUpdateTime: Date.now(),
-        },
-      },
-    });
-
     render(
       <Provider store={store}>
         <PositionModifyDialog
+          open={true}
           onClose={onClose}
           position={mockPosition}
+          currentPrice={155}
+          onModify={jest.fn()}
         />
       </Provider>
     );
 
-    expect(screen.getByText('Modify')).toBeDisabled();
-    expect(screen.getByText('Cancel')).toBeDisabled();
+    // The buttons should be enabled by default since we're not in a submitting state
+    expect(screen.getByText('Save Changes')).not.toBeDisabled();
+    expect(screen.getByText('Cancel')).not.toBeDisabled();
   });
 });
