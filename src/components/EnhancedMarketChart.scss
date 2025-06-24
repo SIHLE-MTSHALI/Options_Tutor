@@ -1,0 +1,382 @@
+@import '../styles/variables.scss';
+
+.enhanced-market-chart {
+  background: $panel-bg;
+  border-radius: 8px;
+  padding: 20px;
+  margin: 10px 0;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+
+  .chart-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+    gap: 15px;
+
+    .symbol-info {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+
+      .symbol {
+        font-size: 1.5rem;
+        font-weight: bold;
+        color: $light-text;
+        margin: 0;
+      }
+
+      .price-info {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+
+        .current-price {
+          font-size: 1.2rem;
+          font-weight: 600;
+          color: $light-text;
+        }
+
+        .price-change {
+          font-size: 0.9rem;
+          font-weight: 500;
+          padding: 2px 8px;
+          border-radius: 4px;
+
+          &.positive {
+            color: $positive-color;
+            background: rgba(74, 222, 128, 0.1);
+          }
+
+          &.negative {
+            color: $negative-color;
+            background: rgba(248, 113, 113, 0.1);
+          }
+        }
+      }
+    }
+
+    .chart-controls {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+      flex-wrap: wrap;
+
+      .time-frame-selector {
+        display: flex;
+        gap: 2px;
+        background: rgba(255, 255, 255, 0.05);
+        border-radius: 6px;
+        padding: 2px;
+
+        .time-frame-btn {
+          padding: 6px 12px;
+          border: none;
+          background: transparent;
+          color: $light-text;
+          border-radius: 4px;
+          cursor: pointer;
+          font-size: 0.85rem;
+          font-weight: 500;
+          transition: all 0.2s ease;
+
+          &:hover {
+            background: rgba(255, 255, 255, 0.1);
+          }
+
+          &.active {
+            background: $positive-color;
+            color: $dark-bg;
+            font-weight: 600;
+          }
+        }
+      }
+
+      .chart-type-selector {
+        .chart-type-select {
+          padding: 8px 12px;
+          background: rgba(255, 255, 255, 0.05);
+          border: 1px solid rgba(255, 255, 255, 0.1);
+          border-radius: 6px;
+          color: $light-text;
+          font-size: 0.9rem;
+          cursor: pointer;
+          transition: all 0.2s ease;
+
+          &:hover {
+            border-color: rgba(255, 255, 255, 0.2);
+          }
+
+          &:focus {
+            outline: none;
+            border-color: $positive-color;
+            box-shadow: 0 0 0 2px rgba(74, 222, 128, 0.2);
+          }
+
+          option {
+            background: $panel-bg;
+            color: $light-text;
+          }
+        }
+      }
+
+      .action-buttons {
+        display: flex;
+        gap: 8px;
+
+        button {
+          padding: 8px 10px;
+          background: rgba(255, 255, 255, 0.05);
+          border: 1px solid rgba(255, 255, 255, 0.1);
+          border-radius: 6px;
+          color: $light-text;
+          cursor: pointer;
+          font-size: 1rem;
+          transition: all 0.2s ease;
+
+          &:hover {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: rgba(255, 255, 255, 0.2);
+          }
+
+          &:active {
+            transform: translateY(1px);
+          }
+        }
+      }
+    }
+  }
+
+  .indicators-panel {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    margin-bottom: 15px;
+    padding: 10px 15px;
+    background: rgba(255, 255, 255, 0.02);
+    border-radius: 6px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    flex-wrap: wrap;
+
+    .indicators-label {
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: $light-text;
+      white-space: nowrap;
+    }
+
+    .indicator-checkbox {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      cursor: pointer;
+      font-size: 0.85rem;
+      color: $light-text;
+      transition: color 0.2s ease;
+
+      &:hover {
+        color: $positive-color;
+      }
+
+      input[type="checkbox"] {
+        width: 16px;
+        height: 16px;
+        accent-color: $positive-color;
+        cursor: pointer;
+      }
+
+      span {
+        user-select: none;
+        font-weight: 500;
+      }
+    }
+  }
+
+  .chart-container {
+    position: relative;
+    background: rgba(255, 255, 255, 0.02);
+    border-radius: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    overflow: hidden;
+
+    .loading-spinner {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 100%;
+      color: $light-text;
+      font-size: 1.1rem;
+      
+      &::after {
+        content: '';
+        width: 20px;
+        height: 20px;
+        margin-left: 10px;
+        border: 2px solid transparent;
+        border-top: 2px solid $positive-color;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+      }
+    }
+
+    .error-message {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 100%;
+      color: $negative-color;
+      font-size: 1.1rem;
+      font-weight: 500;
+    }
+
+    canvas {
+      border-radius: 8px;
+    }
+  }
+
+  .position-info {
+    margin-top: 15px;
+    padding: 12px 15px;
+    background: rgba(255, 255, 255, 0.02);
+    border-radius: 6px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+
+    .position-details {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.9rem;
+      color: $light-text;
+
+      .position-pl {
+        font-weight: 600;
+        padding: 4px 8px;
+        border-radius: 4px;
+        background: rgba(74, 222, 128, 0.1);
+        color: $positive-color;
+      }
+    }
+  }
+
+  // Responsive design
+  @media (max-width: 768px) {
+    padding: 15px;
+
+    .chart-header {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 10px;
+
+      .chart-controls {
+        width: 100%;
+        justify-content: space-between;
+
+        .time-frame-selector {
+          flex: 1;
+          justify-content: space-between;
+
+          .time-frame-btn {
+            flex: 1;
+            text-align: center;
+          }
+        }
+      }
+    }
+
+    .indicators-panel {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 10px;
+
+      .indicators-label {
+        margin-bottom: 5px;
+      }
+    }
+
+    .position-info .position-details {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 8px;
+    }
+  }
+
+  @media (max-width: 480px) {
+    padding: 10px;
+
+    .chart-header .symbol-info .symbol {
+      font-size: 1.3rem;
+    }
+
+    .chart-header .chart-controls {
+      flex-direction: column;
+      width: 100%;
+      gap: 10px;
+
+      .time-frame-selector,
+      .chart-type-selector,
+      .action-buttons {
+        width: 100%;
+      }
+
+      .chart-type-selector .chart-type-select {
+        width: 100%;
+      }
+
+      .action-buttons {
+        justify-content: center;
+      }
+    }
+  }
+
+  // Dark mode enhancements
+  &:hover {
+    border-color: rgba(255, 255, 255, 0.15);
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+  }
+
+  // Animation for smooth transitions
+  * {
+    transition: all 0.2s ease;
+  }
+
+  // Fullscreen mode
+  &:fullscreen {
+    background: $dark-bg;
+    padding: 40px;
+
+    .chart-container {
+      height: calc(100vh - 200px) !important;
+    }
+  }
+}
+
+// Keyframe animations
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+// Chart tooltip customization
+.chartjs-tooltip {
+  background: rgba(0, 0, 0, 0.9) !important;
+  border: 1px solid $positive-color !important;
+  border-radius: 8px !important;
+  color: $light-text !important;
+  font-family: inherit !important;
+  font-size: 0.85rem !important;
+  padding: 12px !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3) !important;
+}
+
+// Performance optimizations
+.enhanced-market-chart {
+  will-change: transform;
+  contain: layout style paint;
+}
+
+.chart-container canvas {
+  will-change: transform;
+  contain: strict;
+}
