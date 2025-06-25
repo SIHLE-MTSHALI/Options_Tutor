@@ -69,6 +69,7 @@ describe('tradeThunks', () => {
         portfolio: {
           cashBalance: 10000,
           positions: [mockPosition],
+          strategies: [],
           unrealizedPL: 500,
           realizedPL: 0,
           marginUsage: 0,

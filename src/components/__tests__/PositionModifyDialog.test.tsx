@@ -68,7 +68,8 @@ describe('PositionModifyDialog Component', () => {
           showPayoffDiagram: false,
           showRiskGraph: false,
           tradeError: null,
-          accountId: 'test-account'
+          accountId: 'test-account',
+          etfStrategies: []
         }
       },
     });

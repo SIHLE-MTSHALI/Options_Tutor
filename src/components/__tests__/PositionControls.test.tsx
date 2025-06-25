@@ -189,7 +189,7 @@ describe('PositionControls Component', () => {
 
   test('successfully closes position on button click', async () => {
     const mockStockTradeThunk = jest.fn().mockResolvedValue({ type: 'fulfilled', payload: { success: true } });
-    (tradeThunks.stockTradeThunk as jest.Mock).mockImplementation(mockStockTradeThunk);
+    (tradeThunks.stockTradeThunk as unknown as jest.Mock).mockImplementation(mockStockTradeThunk);
     
     await act(async () => {
       render(
@@ -215,7 +215,7 @@ describe('PositionControls Component', () => {
 
   test('handles error when closing position', async () => {
     const mockStockTradeThunk = jest.fn().mockRejectedValue(new Error('Insufficient funds'));
-    (tradeThunks.stockTradeThunk as jest.Mock).mockImplementation(mockStockTradeThunk);
+    (tradeThunks.stockTradeThunk as unknown as jest.Mock).mockImplementation(mockStockTradeThunk);
     const errorSpy = jest.spyOn(console, 'error').mockImplementation();
     
     render(

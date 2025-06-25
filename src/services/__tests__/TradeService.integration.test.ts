@@ -70,6 +70,7 @@ describe('TradeService Integration Tests', () => {
     portfolio: {
       cashBalance: 10000,
       positions: [],
+      strategies: [],
       unrealizedPL: 0,
       realizedPL: 0,
       marginUsage: 0,
@@ -81,7 +82,8 @@ describe('TradeService Integration Tests', () => {
       isPending: false,
       lastUpdated: Date.now(),
       initialInvestment: 10000,
-      status: 'idle'
+      status: 'idle',
+      strategyProfitLoss: {}
     },
     trading: {
       selectedLeg: null,
@@ -92,7 +94,9 @@ describe('TradeService Integration Tests', () => {
       selectedStrategy: null,
       showPayoffDiagram: false,
       showRiskGraph: false,
-      tradeError: null
+      tradeError: null,
+      accountId: 'test-account',
+      etfStrategies: []
     },
     learning: {
       activeLesson: null,
@@ -105,7 +109,7 @@ describe('TradeService Integration Tests', () => {
       riskProfile: 'balanced',
       journalEntries: []
     }
-  } as RootState;
+  } as unknown as RootState;
 
   beforeEach(() => {
     jest.clearAllMocks();
@@ -132,7 +136,13 @@ describe('TradeService Integration Tests', () => {
   });
 
   test('throws error for invalid legs', async () => {
-    const invalidState = { ...mockState, marketData: { optionChains: {} } };
+    const invalidState = { 
+      ...mockState, 
+      marketData: { 
+        ...mockState.marketData,
+        optionChains: {} 
+      } 
+    } as unknown as RootState;
     mockGetState.mockReturnValue(invalidState);
 
     await expect(
@@ -155,7 +165,7 @@ describe('TradeService Integration Tests', () => {
         ...mockState.marketData, 
         stockQuotes: {} 
       } 
-    };
+    } as unknown as RootState;
     mockGetState.mockReturnValue(noQuoteState);
 
     await TradeService.executeTrade([sampleLeg], mockGetState, mockDispatch);
@@ -171,7 +181,7 @@ describe('TradeService Integration Tests', () => {
         ...mockState.marketData, 
         stockQuotes: {} 
       } 
-    };
+    } as unknown as RootState;
     mockGetState.mockReturnValue(noQuoteState);
     (MockApiService.getInstance().fetchStockQuote as jest.Mock).mockRejectedValue(new Error('API error'));
 
