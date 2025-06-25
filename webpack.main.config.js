@@ -8,6 +8,17 @@ module.exports = {
     path: path.resolve(__dirname, 'dist'),
     filename: 'main.js'
   },
+  externals: [
+    // Exclude the services from being bundled
+    function(context, request, callback) {
+      // Don't bundle service imports
+      if (request.includes('/services/AlphaVantageService') || 
+          request.includes('/services/DataSchedulerService')) {
+        return callback(null, 'commonjs ' + request);
+      }
+      callback();
+    }
+  ],
   module: {
     rules: [
       {

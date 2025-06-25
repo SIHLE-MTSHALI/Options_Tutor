@@ -75,27 +75,35 @@ async function initializeServices() {
   try {
     console.log('[Main] Initializing services...')
     
-    // Import services (dynamic import to ensure app is ready)
-    let AVService, DSService;
-    
-    try {
-      // Try to import from dist directory (production build)
-      AVService = require('./dist/services/AlphaVantageService').AlphaVantageService;
-      DSService = require('./dist/services/DataSchedulerService').DataSchedulerService;
-    } catch (error) {
-      console.log('[Main] Could not load from dist directory, trying src directory...');
+    // In development mode, use source files directly
+    if (process.env.NODE_ENV === 'development') {
       try {
-        // Fallback to src directory (development without build)
-        AVService = require('./src/services/AlphaVantageService').AlphaVantageService;
-        DSService = require('./src/services/DataSchedulerService').DataSchedulerService;
-      } catch (fallbackError) {
-        console.error('[Main] Failed to import services:', fallbackError);
-        throw new Error('Could not load required services. Check build configuration.');
+        console.log('[Main] Loading services from source directory (development mode)');
+        const { AlphaVantageService: AVService } = require('./src/services/AlphaVantageService');
+        const { DataSchedulerService: DSService } = require('./src/services/DataSchedulerService');
+        
+        AlphaVantageService = AVService;
+        DataSchedulerService = DSService;
+      } catch (error) {
+        console.error('[Main] Failed to load services from source directory:', error);
+        throw error;
+      }
+    } 
+    // In production mode, use compiled files
+    else {
+      try {
+        console.log('[Main] Loading services from compiled directory (production mode)');
+        // Adjust the path based on your build output structure
+        const { AlphaVantageService: AVService } = require('./services/AlphaVantageService');
+        const { DataSchedulerService: DSService } = require('./services/DataSchedulerService');
+        
+        AlphaVantageService = AVService;
+        DataSchedulerService = DSService;
+      } catch (error) {
+        console.error('[Main] Failed to load services from compiled directory:', error);
+        throw error;
       }
     }
-    
-    AlphaVantageService = AVService
-    DataSchedulerService = DSService
     
     // Initialize Alpha Vantage service
     const alphaVantage = AlphaVantageService.getInstance()
