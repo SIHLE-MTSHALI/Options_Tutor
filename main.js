@@ -82,23 +82,38 @@ async function initializeServices() {
     
     // Define possible paths to try in order of preference
     const paths = isDevelopment 
-      ? ['./src/services', './dist/services', './services'] // Development paths
-      : ['./services', './dist/services', './src/services']; // Production paths
+      ? ['./dist/services', './services', './src/services'] // Development paths
+      : ['./dist/services', './services', './src/services']; // Production paths
     
     let loaded = false;
     
-    // Try each path until we find one that works
+    // Try to load AlphaVantageService first
     for (const basePath of paths) {
       try {
-        console.log(`[Main] Attempting to load services from: ${basePath}`);
-        
+        console.log(`[Main] Attempting to load AlphaVantageService from: ${basePath}`);
         const AVService = require(`${basePath}/AlphaVantageService`).AlphaVantageService;
-        const DSService = require(`${basePath}/DataSchedulerService`).DataSchedulerService;
-        
         AlphaVantageService = AVService;
-        DataSchedulerService = DSService;
+        console.log(`[Main] Successfully loaded AlphaVantageService from ${basePath}`);
         
-        console.log(`[Main] Successfully loaded services from ${basePath}`);
+        // Try to load DataSchedulerService, but make it optional
+        try {
+          console.log(`[Main] Attempting to load DataSchedulerService from: ${basePath}`);
+          const DSService = require(`${basePath}/DataSchedulerService`).DataSchedulerService;
+          DataSchedulerService = DSService;
+          console.log(`[Main] Successfully loaded DataSchedulerService from ${basePath}`);
+        } catch (dsError) {
+          console.warn(`[Main] DataSchedulerService not available: ${dsError.message}`);
+          console.log('[Main] Continuing without DataSchedulerService');
+          // Create a mock DataSchedulerService
+          DataSchedulerService = {
+            getInstance: () => ({
+              getStats: () => ({ status: 'unavailable' }),
+              forceImmediateFetch: () => Promise.resolve(false),
+              stopScheduler: () => {}
+            })
+          };
+        }
+        
         loaded = true;
         break;
       } catch (error) {
@@ -107,7 +122,7 @@ async function initializeServices() {
     }
     
     if (!loaded) {
-      throw new Error('Failed to load services from any available path');
+      throw new Error('Failed to load AlphaVantageService from any available path');
     }
     
     // Initialize Alpha Vantage service
