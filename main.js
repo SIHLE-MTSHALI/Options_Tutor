@@ -75,34 +75,39 @@ async function initializeServices() {
   try {
     console.log('[Main] Initializing services...')
     
-    // In development mode, use source files directly
-    if (process.env.NODE_ENV === 'development') {
+    // Check if we're in development mode
+    // If NODE_ENV is not explicitly set, default to development
+    const isDevelopment = process.env.NODE_ENV !== 'production';
+    console.log(`[Main] Running in ${isDevelopment ? 'development' : 'production'} mode`);
+    
+    // Define possible paths to try in order of preference
+    const paths = isDevelopment 
+      ? ['./src/services', './dist/services', './services'] // Development paths
+      : ['./services', './dist/services', './src/services']; // Production paths
+    
+    let loaded = false;
+    
+    // Try each path until we find one that works
+    for (const basePath of paths) {
       try {
-        console.log('[Main] Loading services from source directory (development mode)');
-        const { AlphaVantageService: AVService } = require('./src/services/AlphaVantageService');
-        const { DataSchedulerService: DSService } = require('./src/services/DataSchedulerService');
+        console.log(`[Main] Attempting to load services from: ${basePath}`);
+        
+        const AVService = require(`${basePath}/AlphaVantageService`).AlphaVantageService;
+        const DSService = require(`${basePath}/DataSchedulerService`).DataSchedulerService;
         
         AlphaVantageService = AVService;
         DataSchedulerService = DSService;
-      } catch (error) {
-        console.error('[Main] Failed to load services from source directory:', error);
-        throw error;
-      }
-    } 
-    // In production mode, use compiled files
-    else {
-      try {
-        console.log('[Main] Loading services from compiled directory (production mode)');
-        // Adjust the path based on your build output structure
-        const { AlphaVantageService: AVService } = require('./services/AlphaVantageService');
-        const { DataSchedulerService: DSService } = require('./services/DataSchedulerService');
         
-        AlphaVantageService = AVService;
-        DataSchedulerService = DSService;
+        console.log(`[Main] Successfully loaded services from ${basePath}`);
+        loaded = true;
+        break;
       } catch (error) {
-        console.error('[Main] Failed to load services from compiled directory:', error);
-        throw error;
+        console.log(`[Main] Could not load from ${basePath}:`, error.message);
       }
+    }
+    
+    if (!loaded) {
+      throw new Error('Failed to load services from any available path');
     }
     
     // Initialize Alpha Vantage service
@@ -128,78 +133,110 @@ async function initializeServices() {
 
 // Set up IPC handlers for renderer communication
 function setupIpcHandlers() {
-  // Alpha Vantage service handlers
-  ipcMain.handle('alpha-vantage:get-quote', async (event, symbol) => {
-    try {
-      const service = AlphaVantageService.getInstance()
-      return await service.getDetailedStockQuote(symbol)
-    } catch (error) {
-      console.error('IPC Error getting quote:', error)
-      throw error
+  try {
+    // Check if services are available
+    if (!AlphaVantageService || !DataSchedulerService) {
+      console.warn('[Main] Services not available, setting up minimal IPC handlers');
+      
+      // Set up error handlers for all expected IPC channels
+      const setupErrorHandler = (channel) => {
+        ipcMain.handle(channel, async () => {
+          throw new Error('Service not available');
+        });
+      };
+      
+      // Set up error handlers for all channels
+      setupErrorHandler('alpha-vantage:get-quote');
+      setupErrorHandler('alpha-vantage:get-rate-limit-status');
+      setupErrorHandler('alpha-vantage:get-storage-stats');
+      setupErrorHandler('alpha-vantage:force-refresh');
+      setupErrorHandler('scheduler:get-stats');
+      setupErrorHandler('scheduler:force-fetch');
+      
+      console.log('[Main] Error IPC handlers set up');
+      return;
     }
-  })
+    
+    // Alpha Vantage service handlers
+    ipcMain.handle('alpha-vantage:get-quote', async (event, symbol) => {
+      try {
+        const service = AlphaVantageService.getInstance()
+        return await service.getDetailedStockQuote(symbol)
+      } catch (error) {
+        console.error('IPC Error getting quote:', error)
+        throw error
+      }
+    })
 
-  ipcMain.handle('alpha-vantage:get-rate-limit-status', async () => {
-    try {
-      const service = AlphaVantageService.getInstance()
-      return service.getRateLimitStatus()
-    } catch (error) {
-      console.error('IPC Error getting rate limit status:', error)
-      throw error
-    }
-  })
+    ipcMain.handle('alpha-vantage:get-rate-limit-status', async () => {
+      try {
+        const service = AlphaVantageService.getInstance()
+        return service.getRateLimitStatus()
+      } catch (error) {
+        console.error('IPC Error getting rate limit status:', error)
+        throw error
+      }
+    })
 
-  ipcMain.handle('alpha-vantage:get-storage-stats', async () => {
-    try {
-      const service = AlphaVantageService.getInstance()
-      return service.getStorageStats()
-    } catch (error) {
-      console.error('IPC Error getting storage stats:', error)
-      throw error
-    }
-  })
+    ipcMain.handle('alpha-vantage:get-storage-stats', async () => {
+      try {
+        const service = AlphaVantageService.getInstance()
+        return service.getStorageStats()
+      } catch (error) {
+        console.error('IPC Error getting storage stats:', error)
+        throw error
+      }
+    })
 
-  ipcMain.handle('alpha-vantage:force-refresh', async (event, symbol) => {
-    try {
-      const service = AlphaVantageService.getInstance()
-      await service.forceRefresh(symbol)
-      return true
-    } catch (error) {
-      console.error('IPC Error force refreshing:', error)
-      throw error
-    }
-  })
+    ipcMain.handle('alpha-vantage:force-refresh', async (event, symbol) => {
+      try {
+        const service = AlphaVantageService.getInstance()
+        await service.forceRefresh(symbol)
+        return true
+      } catch (error) {
+        console.error('IPC Error force refreshing:', error)
+        throw error
+      }
+    })
 
-  // Data scheduler handlers
-  ipcMain.handle('scheduler:get-stats', async () => {
-    try {
-      const service = DataSchedulerService.getInstance()
-      return service.getStats()
-    } catch (error) {
-      console.error('IPC Error getting scheduler stats:', error)
-      throw error
-    }
-  })
+    // Data scheduler handlers
+    ipcMain.handle('scheduler:get-stats', async () => {
+      try {
+        const service = DataSchedulerService.getInstance()
+        return service.getStats()
+      } catch (error) {
+        console.error('IPC Error getting scheduler stats:', error)
+        throw error
+      }
+    })
 
-  ipcMain.handle('scheduler:force-fetch', async (event, symbols) => {
-    try {
-      const service = DataSchedulerService.getInstance()
-      await service.forceImmediateFetch(symbols)
-      return true
-    } catch (error) {
-      console.error('IPC Error force fetching:', error)
-      throw error
-    }
-  })
+    ipcMain.handle('scheduler:force-fetch', async (event, symbols) => {
+      try {
+        const service = DataSchedulerService.getInstance()
+        await service.forceImmediateFetch(symbols)
+        return true
+      } catch (error) {
+        console.error('IPC Error force fetching:', error)
+        throw error
+      }
+    })
 
-  console.log('[Main] IPC handlers set up')
+    console.log('[Main] IPC handlers set up successfully')
+  } catch (error) {
+    console.error('[Main] Error setting up IPC handlers:', error);
+  }
 }
 
 app.whenReady().then(async () => {
-  // Initialize services first
-  await initializeServices()
+  try {
+    // Initialize services first
+    await initializeServices()
+  } catch (error) {
+    console.error('[Main] Service initialization failed:', error.message);
+    // Continue with app startup even if services fail
+  }
   
-  // Set up IPC handlers
+  // Set up IPC handlers (with error handling inside)
   setupIpcHandlers()
   
   // Create main window
