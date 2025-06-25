@@ -176,7 +176,7 @@ export class TradeService {
             strike: strategy.strike,
             expiry: strategy.expiry,
             action: 'sell',
-            premium: this.calculateOptionPremium('call', underlyingPrice, strategy.strike, strategy.expiry)
+            premium: this.calculateOptionPremium('call', underlyingPrice, strategy.strike || 0, strategy.expiry)
           }
         ];
         break;
@@ -190,7 +190,7 @@ export class TradeService {
             strike: strategy.strike,
             expiry: strategy.expiry,
             action: 'sell',
-            premium: this.calculateOptionPremium('put', underlyingPrice, strategy.strike, strategy.expiry)
+            premium: this.calculateOptionPremium('put', underlyingPrice, strategy.strike || 0, strategy.expiry)
           }
         ];
         break;
@@ -204,7 +204,7 @@ export class TradeService {
             strike: strategy.strike,
             expiry: strategy.expiry,
             action: 'sell',
-            premium: this.calculateOptionPremium('call', underlyingPrice, strategy.strike, strategy.expiry)
+            premium: this.calculateOptionPremium('call', underlyingPrice, strategy.strike || 0, strategy.expiry)
           },
           {
             id: `collar-put-${strategy.symbol}-${strategy.putStrike!}-${strategy.expiry}-${Date.now()}`,

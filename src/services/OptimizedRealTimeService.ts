@@ -1,6 +1,6 @@
 import { webSocket, WebSocketSubject } from 'rxjs/webSocket';
-import { Subject, interval, Subscription, BehaviorSubject, fromEvent } from 'rxjs';
-import { throttleTime, retryWhen, delay, debounceTime, distinctUntilChanged } from 'rxjs/operators';
+import { Subject, interval, Subscription, BehaviorSubject, fromEvent, timer } from 'rxjs';
+import { throttleTime, retryWhen, delay, debounceTime, distinctUntilChanged, delayWhen } from 'rxjs/operators';
 import { batchUpdatePositionPrices } from '../redux/portfolioSlice';
 
 /**
@@ -194,7 +194,7 @@ export class OptimizedRealTimeService {
         this.handleProcessedBatch(data);
         break;
       case 'METRICS_CALCULATED':
-        this.updatePerformanceMetrics(data);
+        this.updatePerformanceMetricsFromData(data);
         break;
     }
   }
@@ -564,6 +564,16 @@ export class OptimizedRealTimeService {
   }
 
   /**
+   * Update performance metrics from worker data
+   */
+  private updatePerformanceMetricsFromData(data: any): void {
+    if (data && typeof data === 'object') {
+      Object.assign(this.performanceMetrics, data);
+      this.performanceMetrics$.next({ ...this.performanceMetrics });
+    }
+  }
+
+  /**
    * Connection management
    */
   private onConnectionEstablished(url: string): void {
@@ -600,13 +610,13 @@ export class OptimizedRealTimeService {
         errors.pipe(
           delay(this.config.initialReconnectDelay),
           // Exponential backoff with jitter
-          delay(() => {
+          delayWhen(() => {
             const backoff = Math.min(
               this.config.initialReconnectDelay * Math.pow(2, this.performanceMetrics.reconnectCount),
               this.config.maxReconnectDelay
             );
             const jitter = Math.random() * 1000;
-            return backoff + jitter;
+            return timer(backoff + jitter);
           })
         )
       )

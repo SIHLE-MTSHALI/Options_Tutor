@@ -79,6 +79,8 @@ export class RiskMonitoringService {
           [ // Build OptionLeg array from strategy parameters
             {
               id: 'main',
+              symbol: strategy.symbol,
+              action: 'sell' as const,
               optionType: strategy.type === 'cash-secured-put' ? 'put' : 'call',
               strike: strategy.parameters.strike,
               expiry: strategy.parameters.expiry,

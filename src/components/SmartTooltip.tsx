@@ -36,9 +36,8 @@ interface SmartTooltipContent {
   examples?: string[];
 }
 
-interface SmartTooltipProps extends Omit<TooltipProps, 'title' | 'children'> {
+interface SmartTooltipProps extends Omit<TooltipProps, 'title'> {
   content: SmartTooltipContent | string;
-  children: React.ReactElement;
   interactive?: boolean;
   showIcon?: boolean;
   iconType?: 'help' | 'info' | 'warning' | 'error' | 'success' | 'tip';
@@ -306,7 +305,7 @@ const SmartTooltip: React.FC<SmartTooltipProps> = ({
       open={persistent ? open : undefined}
       onOpen={handleOpen}
       onClose={handleClose}
-      interactive={interactive}
+      disableInteractive={!interactive}
       enterDelay={delay}
       leaveDelay={interactive ? 300 : 200}
       TransitionComponent={Fade}

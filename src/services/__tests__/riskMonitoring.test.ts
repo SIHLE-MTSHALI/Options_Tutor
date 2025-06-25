@@ -27,8 +27,7 @@ describe('RiskMonitoringService', () => {
     type: 'stock',
     positionType: 'long',
     currentPrice: 150,
-    unrealizedPL: 500,
-    optionDetails: null
+    unrealizedPL: 500
   };
 
   const mockStrategy: ETFStrategyState = {

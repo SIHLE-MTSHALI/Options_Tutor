@@ -95,7 +95,7 @@ const EnhancedMarketChart: React.FC<EnhancedMarketChartProps> = ({
   const [priceChange, setPriceChange] = useState<number>(0);
   const [priceChangePercent, setPriceChangePercent] = useState<number>(0);
   
-  const chartRef = useRef<ChartJS<'line' | 'bar' | 'scatter'>>(null);
+  const chartRef = useRef<ChartJS<'line'>>(null);
   const realTimeService = useRef(OptimizedRealTimeService.getInstance());
   
   const portfolio = useAppSelector(state => state.portfolio);

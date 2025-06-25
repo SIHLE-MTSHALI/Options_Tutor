@@ -42,16 +42,17 @@ export async function getHistoricalVolatility(ticker: string): Promise<number> {
     // Get historical data for volatility calculation
     const historicalData = await alphaVantageService.getHistoricalData(ticker, 'daily');
     
-    if (!historicalData || historicalData.length < 20) {
+    if (!historicalData || !historicalData.data || historicalData.data.length < 20) {
       console.warn(`Insufficient historical data for ${ticker}, using default volatility`);
       return 0.25; // Default 25% volatility
     }
 
     // Calculate historical volatility (annualized)
     const returns = [];
-    for (let i = 1; i < Math.min(historicalData.length, 252); i++) { // Use up to 1 year of data
-      const currentPrice = historicalData[i - 1].close;
-      const previousPrice = historicalData[i].close;
+    const dataArray = historicalData.data;
+    for (let i = 1; i < Math.min(dataArray.length, 252); i++) { // Use up to 1 year of data
+      const currentPrice = dataArray[i - 1].close;
+      const previousPrice = dataArray[i].close;
       const dailyReturn = Math.log(currentPrice / previousPrice);
       returns.push(dailyReturn);
     }
@@ -120,7 +121,7 @@ export async function getProviderStatus() {
  */
 export function clearMarketDataCache(): void {
   marketDataService.clearCache();
-  alphaVantageService.clearCache();
+  // AlphaVantageService doesn't have a clearCache method
 }
 
 /**

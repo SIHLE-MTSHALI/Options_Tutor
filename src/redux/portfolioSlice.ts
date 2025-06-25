@@ -23,6 +23,7 @@ export interface Position {
 export interface PortfolioState {
   cashBalance: number;
   positions: Position[];
+  strategies: any[]; // ETF strategies - using any[] for now to avoid circular imports
   unrealizedPL: number;
   realizedPL: number;
   marginUsage: number;
@@ -39,6 +40,7 @@ export interface PortfolioState {
 export const initialState: PortfolioState = {
   cashBalance: 10000,
   positions: [],
+  strategies: [],
   unrealizedPL: 0,
   realizedPL: 0,
   marginUsage: 0,

@@ -116,6 +116,7 @@ describe('ETF Strategy Integration Tests', () => {
   test('MSTY Covered Call execution and margin', async () => {
     const legs: OptionLeg[] = [
       {
+        id: 'test-msty-call-1',
         symbol: 'MSTY',
         action: 'sell',
         quantity: 1,
@@ -147,6 +148,7 @@ describe('ETF Strategy Integration Tests', () => {
   test('PLTY Cash-Secured Put execution and margin', async () => {
     const legs: OptionLeg[] = [
       {
+        id: 'test-plty-put-1',
         symbol: 'PLTY',
         action: 'sell',
         quantity: 1,
@@ -178,6 +180,7 @@ describe('ETF Strategy Integration Tests', () => {
   test('TSLY Collar execution and margin', async () => {
     const legs: OptionLeg[] = [
       {
+        id: 'test-tsly-put-1',
         symbol: 'TSLY',
         action: 'buy',
         quantity: 1,
@@ -187,6 +190,7 @@ describe('ETF Strategy Integration Tests', () => {
         premium: 0.5
       },
       {
+        id: 'test-tsly-call-1',
         symbol: 'TSLY',
         action: 'sell',
         quantity: 1,

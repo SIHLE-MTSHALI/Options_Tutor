@@ -226,7 +226,7 @@ const EnhancedEducationalPanel: React.FC<EnhancedEducationalPanelProps> = ({
   const renderTutorials = () => (
     <div className="tutorials-content">
       <InteractiveTutorialSystem 
-        selectedTutorial={selectedTutorial}
+        selectedTutorial={selectedTutorial || undefined}
         onTutorialComplete={(tutorialId) => {
           console.log(`Tutorial completed: ${tutorialId}`);
           setSelectedTutorial(null);
