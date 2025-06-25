@@ -40,7 +40,7 @@ export async function getDetailedQuote(ticker: string) {
 export async function getHistoricalVolatility(ticker: string): Promise<number> {
   try {
     // Get historical data for volatility calculation
-    const historicalData = await alphaVantageService.getHistoricalData(ticker, 'daily');
+    const historicalData = await alphaVantageService.getHistoricalData(ticker);
     
     if (!historicalData || !historicalData.data || historicalData.data.length < 20) {
       console.warn(`Insufficient historical data for ${ticker}, using default volatility`);

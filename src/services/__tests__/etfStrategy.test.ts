@@ -245,6 +245,7 @@ describe('ETF Strategy Integration Tests', () => {
 
     const legs: OptionLeg[] = [
       {
+        id: 'test-tsly-call-covered',
         symbol: 'TSLY',
         optionType: 'call',
         strike: 12,
@@ -280,6 +281,7 @@ describe('ETF Strategy Integration Tests', () => {
 
     const legs: OptionLeg[] = [
       {
+        id: 'test-aapl-call-non-etf',
         symbol: 'AAPL',  // Non-ETF
         optionType: 'call',
         strike: 150,
@@ -316,6 +318,7 @@ describe('ETF Strategy Integration Tests', () => {
 
     const legs: OptionLeg[] = [
       {
+        id: 'test-tsly-call-fallback',
         symbol: 'TSLY',
         optionType: 'call',
         strike: 12,
@@ -337,6 +340,7 @@ describe('ETF Strategy Integration Tests', () => {
   test('Early assignment risk detection', async () => {
     const legs: OptionLeg[] = [
       {
+        id: 'test-msty-call-early-assignment',
         symbol: 'MSTY',
         action: 'sell',
         quantity: 1,
@@ -366,6 +370,7 @@ describe('ETF Strategy Integration Tests', () => {
     // Change to a collar strategy for TSLY (which is the expected strategy for TSLY)
     const legs: OptionLeg[] = [
       {
+        id: 'test-tsly-call-collar',
         symbol: 'TSLY',
         optionType: 'call',
         action: 'sell',
@@ -375,6 +380,7 @@ describe('ETF Strategy Integration Tests', () => {
         expiry: '2023-12-15'
       },
       {
+        id: 'test-tsly-put-collar',
         symbol: 'TSLY',
         optionType: 'put',
         action: 'buy',

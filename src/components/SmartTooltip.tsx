@@ -1,7 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import {
   Tooltip,
-  TooltipProps,
   Fade,
   Paper,
   Typography,
@@ -36,8 +35,9 @@ interface SmartTooltipContent {
   examples?: string[];
 }
 
-interface SmartTooltipProps extends Omit<TooltipProps, 'title'> {
+interface SmartTooltipProps {
   content: SmartTooltipContent | string;
+  children: React.ReactElement;
   interactive?: boolean;
   showIcon?: boolean;
   iconType?: 'help' | 'info' | 'warning' | 'error' | 'success' | 'tip';
@@ -48,6 +48,10 @@ interface SmartTooltipProps extends Omit<TooltipProps, 'title'> {
   onClose?: () => void;
   onLearnMore?: (topic: string) => void;
   onDemo?: () => void;
+  // Include commonly used TooltipProps
+  className?: string;
+  arrow?: boolean;
+  disabled?: boolean;
 }
 
 const SmartTooltip: React.FC<SmartTooltipProps> = ({
@@ -63,7 +67,9 @@ const SmartTooltip: React.FC<SmartTooltipProps> = ({
   onClose,
   onLearnMore,
   onDemo,
-  ...tooltipProps
+  className,
+  arrow = false,
+  disabled = false
 }) => {
   const [open, setOpen] = useState(false);
   const [userInteracted, setUserInteracted] = useState(false);
@@ -72,12 +78,18 @@ const SmartTooltip: React.FC<SmartTooltipProps> = ({
 
   // Handle simple string content
   if (typeof content === 'string') {
+    // Simple tooltip - conditionally render based on disabled state
+    if (disabled) {
+      return children;
+    }
+    
     return (
       <Tooltip
         title={content}
         placement={position}
         enterDelay={delay}
-        {...tooltipProps}
+        className={className}
+        arrow={arrow}
       >
         {children}
       </Tooltip>
@@ -298,6 +310,11 @@ const SmartTooltip: React.FC<SmartTooltipProps> = ({
     );
   }
 
+  // Handle disabled state for complex tooltip
+  if (disabled) {
+    return children;
+  }
+
   return (
     <Tooltip
       title={tooltipContent}
@@ -310,6 +327,8 @@ const SmartTooltip: React.FC<SmartTooltipProps> = ({
       leaveDelay={interactive ? 300 : 200}
       TransitionComponent={Fade}
       TransitionProps={{ timeout: 300 }}
+      className={className}
+      arrow={arrow}
       componentsProps={{
         tooltip: {
           className: `smart-tooltip ${type} ${interactive ? 'interactive' : ''}`,
@@ -319,7 +338,6 @@ const SmartTooltip: React.FC<SmartTooltipProps> = ({
           className: 'smart-tooltip-popper'
         }
       }}
-      {...tooltipProps}
     >
       <span className="smart-tooltip-trigger">
         {children}
