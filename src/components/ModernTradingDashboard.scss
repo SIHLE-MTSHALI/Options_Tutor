@@ -134,6 +134,12 @@
     padding: 80px 24px 24px;
     overflow-y: auto;
     background: transparent;
+    min-height: calc(100vh - 64px); // Ensure minimum height
+    width: 100%;
+    display: block;
+    position: relative;
+    z-index: 1;
+    animation: fadeIn 0.5s ease-in-out;
 
     // Custom scrollbar
     &::-webkit-scrollbar {
@@ -495,10 +501,41 @@
     }
   }
 
+  // Bottom Navigation
+  .bottom-navigation {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    z-index: 1000;
+    background: rgba(28, 35, 51, 0.95) !important;
+    backdrop-filter: blur(10px);
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    padding: 8px 0;
+    display: none; // Hidden by default, shown on mobile
+
+    .active-nav {
+      color: $positive-color !important;
+      position: relative;
+
+      &::after {
+        content: '';
+        position: absolute;
+        bottom: -8px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 4px;
+        height: 4px;
+        border-radius: 50%;
+        background-color: $positive-color;
+      }
+    }
+  }
+
   // Responsive Design
   @media (max-width: 768px) {
     .main-content {
-      padding: 80px 16px 16px;
+      padding: 80px 16px 70px; // Added bottom padding for bottom navigation
     }
 
     .dashboard-overview {
@@ -514,8 +551,12 @@
     }
 
     .help-fab {
-      bottom: 16px !important;
+      bottom: 70px !important; // Adjusted for bottom navigation
       right: 16px !important;
+    }
+
+    .bottom-navigation {
+      display: block; // Show on mobile
     }
   }
 

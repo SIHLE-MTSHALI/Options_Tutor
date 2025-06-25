@@ -168,7 +168,7 @@ const App: React.FC = () => {
     <Provider store={store}>
       <ThemeProvider theme={darkTheme}>
         <CssBaseline />
-        <div className="app">
+        <div className="app" style={{ height: '100vh', width: '100vw', overflow: 'hidden' }}>
           <ModernTradingDashboard />
           
           {/* User Onboarding */}

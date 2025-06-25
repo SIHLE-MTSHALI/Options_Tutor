@@ -128,6 +128,9 @@ const ModernTradingDashboard: React.FC = () => {
     if (!hasSeenOnboarding && portfolio.positions.length === 0) {
       setShowOnboarding(true);
     }
+    
+    // Always open sidebar on first load for better navigation
+    setSidebarOpen(true);
   }, [portfolio.positions.length]);
 
   // Navigation items
@@ -895,6 +898,26 @@ const ModernTradingDashboard: React.FC = () => {
       >
         <TipIcon />
       </Fab>
+
+      {/* Bottom Navigation for Mobile */}
+      <Paper className="bottom-navigation" elevation={3}>
+        <Box display="flex" justifyContent="space-around" width="100%">
+          {navigationItems.map((item) => (
+            <IconButton
+              key={item.id}
+              color={activeView === item.view ? "primary" : "default"}
+              onClick={() => handleViewChange(item.view)}
+              className={activeView === item.view ? "active-nav" : ""}
+            >
+              <Tooltip title={item.label} placement="top">
+                <Badge badgeContent={item.badge} color="error">
+                  {item.icon}
+                </Badge>
+              </Tooltip>
+            </IconButton>
+          ))}
+        </Box>
+      </Paper>
     </div>
   );
 };
