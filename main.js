@@ -236,6 +236,30 @@ function setupIpcHandlers() {
       }
     })
 
+    // Alpha Vantage file system handlers
+    const dataPath = path.join(app.getPath('userData'), 'market-data', 'alpha-vantage-data.json');
+
+    ipcMain.handle('alpha-vantage:load-data', async () => {
+      try {
+        if (fs.existsSync(dataPath)) {
+          const data = fs.readFileSync(dataPath, 'utf8');
+          return JSON.parse(data);
+        }
+      } catch (error) {
+        console.error('IPC Error loading Alpha Vantage data:', error);
+      }
+      return null;
+    });
+
+    ipcMain.handle('alpha-vantage:save-data', async (event, data) => {
+      try {
+        fs.mkdirSync(path.dirname(dataPath), { recursive: true });
+        fs.writeFileSync(dataPath, JSON.stringify(data, null, 2), 'utf8');
+      } catch (error) {
+        console.error('IPC Error saving Alpha Vantage data:', error);
+      }
+    });
+
     console.log('[Main] IPC handlers set up successfully')
   } catch (error) {
     console.error('[Main] Error setting up IPC handlers:', error);

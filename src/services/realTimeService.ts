@@ -12,6 +12,7 @@ let appStore: any = null;
  */
 export function initRealTimeService(store: any) {
   appStore = store;
+  console.debug('[DEBUG] RealTimeService initialized with Redux store');
 }
 
 const WS_URL = 'ws://localhost:3001'; // Replace with actual WebSocket URL
@@ -35,60 +36,15 @@ export class RealTimeService {
   private subscribedSymbols: Set<string> = new Set();
   private messageQueue: any[] = []; // Queue for messages during disconnects
 
-  private resetReconnectionAttempts(): void {
-    this.reconnectAttempts = 0;
-    console.debug('[RECONNECT] Reset reconnection attempts counter');
-  }
-
-  private startHeartbeat(): void {
-    if (this.heartbeatIntervalId) return;
-    
-    this.heartbeatIntervalId = setInterval(() => {
-      if (this.connectionStatus$.value && this.socket$) {
-        const now = Date.now();
-        const timeSinceLastMessage = now - this.lastMessageTime;
-        
-        if (timeSinceLastMessage > 30000) {
-          console.warn(`[HEARTBEAT] No message in ${timeSinceLastMessage}ms, sending ping`);
-          this.socket$.next('ping');
-        }
-      }
-    }, 30000) as NodeJS.Timeout; // 30-second heartbeat interval
-  }
-
-  private stopHeartbeat(): void {
-    if (this.heartbeatIntervalId) {
-      clearInterval(this.heartbeatIntervalId);
-      this.heartbeatIntervalId = null;
-    }
-  }
-
-
-
   // Subjects for updates
   public priceUpdates$ = new Subject<{ symbol: string; price: number }>();
   public plUpdates$ = new Subject<{ symbol: string; pl: number }>();
   
   // BehaviorSubject for connection status
   public connectionStatus$ = new BehaviorSubject<boolean>(false);
-  
-  // Add connection status to Redux store
-  private updateReduxConnectionStatus(status: boolean): void {
-    if (appStore) {
-      appStore.dispatch({
-        type: 'connection/setStatus',
-        payload: status
-      });
-    }
-  }
 
   constructor() {
     this.setupReconnectionLogic();
-    // In development, skip WebSocket and use mock data
-    if (process.env.NODE_ENV === 'development') {
-      console.debug('[DEBUG] Development mode: Starting mock data simulation');
-      this.simulateMockData();
-    }
   }
 
   /**
@@ -96,9 +52,10 @@ export class RealTimeService {
    * @param url WebSocket server URL
    */
   connect(url: string): void {
-    // Skip connection in development mode
+    // In development, skip WebSocket and use mock data
     if (process.env.NODE_ENV === 'development') {
-      console.debug('[DEBUG] Skipping WebSocket connection in development mode');
+      console.debug('[DEBUG] Development mode: Starting mock data simulation');
+      this.simulateMockData();
       return;
     }
     
@@ -221,7 +178,6 @@ export class RealTimeService {
     return baseDelay + jitter;
   }
 
-
   private scheduleReconnection(): void {
     if (!this.connectionUrl) return;
     
@@ -240,26 +196,21 @@ export class RealTimeService {
     try {
       this.lastMessageTime = Date.now(); // Update last message timestamp
       
-      // Handle heartbeat pong
       if (message === 'pong') {
         console.debug('[HEARTBEAT] Received pong');
         return;
       }
       
-      // Skip processing if message is HTTP response
       if (typeof message === 'string' && message.startsWith('HTTP/')) {
         console.error('[ERROR] Received HTTP response instead of WebSocket data:', message.substring(0, 200));
         return;
       }
       
-      // Parse JSON if needed
       const parsed = typeof message === 'string' ? JSON.parse(message) : message;
       
-      // Handle portfolio P&L updates (array of updates)
       if (Array.isArray(parsed)) {
         console.debug('[DEBUG] Received portfolio updates:', parsed);
         const updates = this.validatePortfolioUpdates(parsed);
-        // Convert to price updates format expected by Redux
         const priceUpdates = updates.map(position => ({
           symbol: position.symbol,
           price: position.currentPrice,
@@ -273,25 +224,15 @@ export class RealTimeService {
         return;
       }
       
-      // Handle price updates (single symbol update)
       if (parsed && parsed.symbol) {
         if (parsed.price) {
           console.debug(`[DEBUG] Received price update for ${parsed.symbol}: ${parsed.price}`);
-          // Update cache with latest price
           this.priceCache.set(parsed.symbol, parsed.price);
-          
-          // Emit price update to subscribers
-          this.priceUpdates$.next({
-            symbol: parsed.symbol,
-            price: parsed.price
-          });
+          this.priceUpdates$.next({ symbol: parsed.symbol, price: parsed.price });
         }
         if (parsed.unrealizedPnl) {
           console.debug(`[DEBUG] Received P&L update for ${parsed.symbol}: ${parsed.unrealizedPnl}`);
-          this.plUpdates$.next({
-            symbol: parsed.symbol,
-            pl: parsed.unrealizedPnl
-          });
+          this.plUpdates$.next({ symbol: parsed.symbol, pl: parsed.unrealizedPnl });
         }
       }
     } catch (error) {
@@ -321,10 +262,7 @@ export class RealTimeService {
       }
 
       const { symbol, position, averagePrice, unrealizedPnl } = update;
-      if (typeof symbol !== 'string' || 
-          typeof position !== 'number' || 
-          typeof averagePrice !== 'number' || 
-          typeof unrealizedPnl !== 'number') {
+      if (typeof symbol !== 'string' || typeof position !== 'number' || typeof averagePrice !== 'number' || typeof unrealizedPnl !== 'number') {
         console.error('[ERROR] Invalid update fields:', update);
         throw new Error('Invalid update fields');
       }
@@ -342,7 +280,6 @@ export class RealTimeService {
   private simulateMockData(): void {
     const symbols = ['AAPL', 'MSFT', 'GOOGL', 'AMZN', 'TSLA'];
     setInterval(() => {
-      // Simulate portfolio updates
       const mockPosition: Position = {
         id: `mock-${symbols[Math.floor(Math.random() * symbols.length)]}`,
         symbol: symbols[Math.floor(Math.random() * symbols.length)],
@@ -353,7 +290,6 @@ export class RealTimeService {
         currentPrice: Math.random() * 300,
         unrealizedPL: (Math.random() - 0.5) * 1000
       };
-      console.log('[MOCK] Dispatching mock portfolio update:', mockPosition);
       if (appStore) {
         appStore.dispatch(batchUpdatePositionPrices([{
           symbol: mockPosition.symbol,
@@ -364,17 +300,48 @@ export class RealTimeService {
         console.error('[ERROR] Store not initialized in realTimeService');
       }
       
-      // Simulate price updates
       const priceUpdate = {
         symbol: symbols[Math.floor(Math.random() * symbols.length)],
         price: Math.random() * 300
       };
-      console.log('[MOCK] Dispatching mock price update:', priceUpdate);
       this.priceUpdates$.next(priceUpdate);
     }, 2000);
   }
-}
 
+  private resetReconnectionAttempts(): void {
+    this.reconnectAttempts = 0;
+    console.debug('[RECONNECT] Reset reconnection attempts counter');
+  }
+
+  private startHeartbeat(): void {
+    if (this.heartbeatIntervalId) return;
+    
+    this.heartbeatIntervalId = setInterval(() => {
+      if (this.connectionStatus$.value && this.socket$) {
+        const now = Date.now();
+        const timeSinceLastMessage = now - this.lastMessageTime;
+        
+        if (timeSinceLastMessage > 30000) {
+          console.warn(`[HEARTBEAT] No message in ${timeSinceLastMessage}ms, sending ping`);
+          this.socket$.next('ping');
+        }
+      }
+    }, 30000) as NodeJS.Timeout;
+  }
+
+  private stopHeartbeat(): void {
+    if (this.heartbeatIntervalId) {
+      clearInterval(this.heartbeatIntervalId);
+      this.heartbeatIntervalId = null;
+    }
+  }
+
+  private updateReduxConnectionStatus(status: boolean): void {
+    if (appStore) {
+      appStore.dispatch({ type: 'connection/setStatus', payload: status });
+    }
+  }
+}
 
 // Export singleton instance
 export const realTimeService = new RealTimeService();

@@ -1,7 +1,3 @@
-import * as fs from 'fs';
-import * as path from 'path';
-import { app } from 'electron';
-
 // Enhanced Alpha Vantage service with data persistence and automated fetching
 // Alpha Vantage free tier: 25 requests/day (conservative limit to stay well under 500/day)
 const DAILY_REQUEST_LIMIT = 25;
@@ -70,7 +66,6 @@ interface RateLimitStatus {
 export class AlphaVantageService {
   private static instance: AlphaVantageService;
   private apiKey: string;
-  private dataPath: string;
   private storage: DataStorage;
   private lastRequestTime = 0;
   private readonly baseUrl = 'https://www.alphavantage.co/query';
@@ -79,50 +74,7 @@ export class AlphaVantageService {
 
   private constructor() {
     this.apiKey = process.env.ALPHA_VANTAGE_API_KEY || 'demo';
-    this.dataPath = this.getDataPath();
-    this.storage = this.loadStoredData();
-    this.startAutomaticDataFetching();
-  }
-
-  public static getInstance(): AlphaVantageService {
-    if (!AlphaVantageService.instance) {
-      AlphaVantageService.instance = new AlphaVantageService();
-    }
-    return AlphaVantageService.instance;
-  }
-
-  /**
-   * Get the data storage path
-   */
-  private getDataPath(): string {
-    const userDataPath = app?.getPath('userData') || path.join(process.cwd(), 'data');
-    const dataDir = path.join(userDataPath, 'market-data');
-    
-    // Ensure directory exists
-    if (!fs.existsSync(dataDir)) {
-      fs.mkdirSync(dataDir, { recursive: true });
-    }
-    
-    return path.join(dataDir, 'alpha-vantage-data.json');
-  }
-
-  /**
-   * Load stored data from disk
-   */
-  private loadStoredData(): DataStorage {
-    try {
-      if (fs.existsSync(this.dataPath)) {
-        const data = fs.readFileSync(this.dataPath, 'utf8');
-        const parsed = JSON.parse(data);
-        console.log('[AlphaVantage] Loaded stored data with', Object.keys(parsed.quotes || {}).length, 'quotes');
-        return parsed;
-      }
-    } catch (error) {
-      console.error('[AlphaVantage] Error loading stored data:', error);
-    }
-
-    // Return default structure
-    return {
+    this.storage = {
       quotes: {},
       historical: {},
       company: {},
@@ -132,19 +84,14 @@ export class AlphaVantageService {
         lastRequestDate: new Date().toDateString()
       }
     };
+    this.startAutomaticDataFetching();
   }
 
-  /**
-   * Save data to disk
-   */
-  private saveStoredData(): void {
-    try {
-      const data = JSON.stringify(this.storage, null, 2);
-      fs.writeFileSync(this.dataPath, data, 'utf8');
-      console.log('[AlphaVantage] Data saved to disk');
-    } catch (error) {
-      console.error('[AlphaVantage] Error saving data:', error);
+  public static getInstance(): AlphaVantageService {
+    if (!AlphaVantageService.instance) {
+      AlphaVantageService.instance = new AlphaVantageService();
     }
+    return AlphaVantageService.instance;
   }
 
   /**
@@ -258,7 +205,6 @@ export class AlphaVantageService {
       }
 
       this.storage.metadata.lastUpdate = Date.now();
-      this.saveStoredData();
       
       console.log('[AlphaVantage] Automated data fetch completed');
     } catch (error) {
@@ -467,7 +413,6 @@ export class AlphaVantageService {
     if (status.canMakeRequest) {
       try {
         const quote = await this.fetchStockQuote(symbol);
-        this.saveStoredData();
         return quote;
       } catch (error) {
         console.error(`[AlphaVantage] Failed to fetch quote for ${symbol}:`, error);
@@ -565,7 +510,6 @@ export class AlphaVantageService {
       await this.fetchStockQuote(symbol);
       await this.fetchCompanyOverview(symbol);
       await this.fetchHistoricalData(symbol);
-      this.saveStoredData();
       console.log(`[AlphaVantage] Force refreshed data for ${symbol}`);
     } catch (error) {
       console.error(`[AlphaVantage] Error force refreshing ${symbol}:`, error);
@@ -615,7 +559,6 @@ export class AlphaVantageService {
         lastRequestDate: new Date().toDateString()
       }
     };
-    this.saveStoredData();
     console.log('[AlphaVantage] Cleared all stored data');
   }
 
@@ -649,7 +592,6 @@ export class AlphaVantageService {
    */
   public importData(data: DataStorage): void {
     this.storage = data;
-    this.saveStoredData();
     console.log('[AlphaVantage] Imported data');
   }
 
@@ -705,7 +647,6 @@ export class AlphaVantageService {
     }
 
     if (cleaned > 0) {
-      this.saveStoredData();
       console.log(`[AlphaVantage] Cleaned up ${cleaned} old data entries`);
     }
   }
