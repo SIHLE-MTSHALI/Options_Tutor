@@ -23,6 +23,25 @@ export interface LearningState {
   riskProfile: 'conservative' | 'balanced' | 'aggressive';
   journalEntries: string[];
   availableMissions: Mission[];
+  // Enhanced tutorial system state
+  completedTutorials: string[];
+  completedSteps: string[];
+  currentTutorial?: string;
+  currentStep?: string;
+  tutorialProgress: Record<string, number>; // tutorialId -> progress percentage
+  achievements: Achievement[];
+  learningStreak: number;
+  lastLearningDate?: string;
+}
+
+interface Achievement {
+  id: string;
+  title: string;
+  description: string;
+  icon: string;
+  category: 'tutorial' | 'trading' | 'strategy' | 'risk' | 'milestone';
+  xpReward: number;
+  unlockedAt: string;
 }
 
 const initialWorlds: World[] = [
@@ -72,6 +91,15 @@ const initialState: LearningState = {
   riskProfile: 'balanced',
   journalEntries: [],
   availableMissions: initialWorlds.flatMap(world => world.missions.filter(mission => !mission.completed)),
+  // Enhanced tutorial system initial state
+  completedTutorials: [],
+  completedSteps: [],
+  currentTutorial: undefined,
+  currentStep: undefined,
+  tutorialProgress: {},
+  achievements: [],
+  learningStreak: 0,
+  lastLearningDate: undefined,
 };
 
 export const learningSlice = createSlice({
@@ -119,9 +147,79 @@ export const learningSlice = createSlice({
     },
     addXP: (state, action: PayloadAction<number>) => {
       state.xp += action.payload;
+      // Update level based on XP (every 500 XP = 1 level)
+      state.level = Math.floor(state.xp / 500) + 1;
+    },
+    // Enhanced tutorial system actions
+    startTutorial: (state, action: PayloadAction<string>) => {
+      state.currentTutorial = action.payload;
+      state.currentStep = undefined;
+    },
+    completeTutorial: (state, action: PayloadAction<string>) => {
+      const tutorialId = action.payload;
+      if (!state.completedTutorials.includes(tutorialId)) {
+        state.completedTutorials.push(tutorialId);
+        state.tutorialProgress[tutorialId] = 100;
+        
+        // Update learning streak
+        const today = new Date().toDateString();
+        if (state.lastLearningDate !== today) {
+          if (state.lastLearningDate) {
+            const lastDate = new Date(state.lastLearningDate);
+            const todayDate = new Date(today);
+            const diffTime = Math.abs(todayDate.getTime() - lastDate.getTime());
+            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+            
+            if (diffDays === 1) {
+              state.learningStreak += 1;
+            } else if (diffDays > 1) {
+              state.learningStreak = 1;
+            }
+          } else {
+            state.learningStreak = 1;
+          }
+          state.lastLearningDate = today;
+        }
+      }
+      state.currentTutorial = undefined;
+      state.currentStep = undefined;
+    },
+    completeStep: (state, action: PayloadAction<{ tutorialId: string; stepId: string }>) => {
+      const { tutorialId, stepId } = action.payload;
+      const stepKey = `${tutorialId}-${stepId}`;
+      if (!state.completedSteps.includes(stepKey)) {
+        state.completedSteps.push(stepKey);
+      }
+      state.currentStep = stepId;
+    },
+    updateTutorialProgress: (state, action: PayloadAction<{ tutorialId: string; progress: number }>) => {
+      const { tutorialId, progress } = action.payload;
+      state.tutorialProgress[tutorialId] = progress;
+    },
+    unlockAchievement: (state, action: PayloadAction<Achievement>) => {
+      const achievement = action.payload;
+      if (!state.achievements.find(a => a.id === achievement.id)) {
+        state.achievements.push(achievement);
+        state.xp += achievement.xpReward;
+        state.level = Math.floor(state.xp / 500) + 1;
+      }
+    },
+    setCurrentStep: (state, action: PayloadAction<string>) => {
+      state.currentStep = action.payload;
     }
   },
 });
 
-export const { completeMission, addJournalEntry, setRiskProfile, addXP } = learningSlice.actions;
+export const { 
+  completeMission, 
+  addJournalEntry, 
+  setRiskProfile, 
+  addXP,
+  startTutorial,
+  completeTutorial,
+  completeStep,
+  updateTutorialProgress,
+  unlockAchievement,
+  setCurrentStep
+} = learningSlice.actions;
 export default learningSlice.reducer;

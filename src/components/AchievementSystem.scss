@@ -1,0 +1,607 @@
+@use '../styles/variables' as *;
+
+.achievement-system-dialog {
+  .MuiDialog-paper {
+    background: rgba(28, 35, 51, 0.98) !important;
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 16px !important;
+    color: $light-text;
+    min-height: 70vh;
+
+    .MuiDialogTitle-root {
+      background: rgba(255, 255, 255, 0.05);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      
+      .MuiTypography-h5 {
+        color: $light-text;
+        font-weight: 700;
+      }
+    }
+
+    .MuiDialogContent-root {
+      padding: 0;
+
+      .achievement-tabs {
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        background: rgba(255, 255, 255, 0.03);
+
+        .MuiTab-root {
+          color: rgba($light-text, 0.7);
+          font-weight: 600;
+          text-transform: none;
+
+          &.Mui-selected {
+            color: $positive-color;
+          }
+        }
+
+        .MuiTabs-indicator {
+          background: linear-gradient(45deg, $positive-color, #06b6d4);
+          height: 3px;
+          border-radius: 2px;
+        }
+      }
+
+      .tab-panel {
+        padding: 24px;
+      }
+    }
+  }
+}
+
+// Achievement Cards
+.achievement-card {
+  background: rgba(255, 255, 255, 0.03) !important;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px !important;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+  height: 100%;
+
+  &:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.2);
+  }
+
+  &.completed {
+    border-color: $positive-color;
+    background: rgba(74, 222, 128, 0.1) !important;
+    
+    &:hover {
+      box-shadow: 0 12px 40px rgba(74, 222, 128, 0.3);
+    }
+  }
+
+  // Rarity-based styling
+  &.common {
+    &:hover {
+      border-color: #9ca3af;
+      box-shadow: 0 12px 40px rgba(156, 163, 175, 0.2);
+    }
+  }
+
+  &.rare {
+    &:hover {
+      border-color: #3b82f6;
+      box-shadow: 0 12px 40px rgba(59, 130, 246, 0.2);
+    }
+  }
+
+  &.epic {
+    &:hover {
+      border-color: #8b5cf6;
+      box-shadow: 0 12px 40px rgba(139, 92, 246, 0.2);
+    }
+  }
+
+  &.legendary {
+    &:hover {
+      border-color: #f59e0b;
+      box-shadow: 0 12px 40px rgba(245, 158, 11, 0.2);
+    }
+    
+    &::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: linear-gradient(45deg, rgba(245, 158, 11, 0.1), rgba(245, 158, 11, 0.05));
+      pointer-events: none;
+    }
+  }
+
+  .achievement-header {
+    display: flex;
+    align-items: flex-start;
+    gap: 16px;
+    margin-bottom: 16px;
+
+    .achievement-icon {
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 60px;
+      height: 60px;
+      border-radius: 12px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+
+      .completed-overlay {
+        position: absolute;
+        top: -4px;
+        right: -4px;
+        background: $positive-color;
+        border-radius: 50%;
+        width: 20px;
+        height: 20px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+
+        .MuiSvgIcon-root {
+          font-size: 14px;
+          color: white;
+        }
+      }
+    }
+
+    .achievement-info {
+      flex: 1;
+
+      .achievement-title {
+        color: $light-text;
+        font-weight: 600;
+        margin-bottom: 8px;
+      }
+
+      .achievement-description {
+        color: rgba($light-text, 0.8);
+        line-height: 1.4;
+      }
+    }
+  }
+
+  .achievement-meta {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-bottom: 16px;
+
+    .rarity-chip {
+      font-weight: 600;
+      
+      &.common {
+        background: rgba(156, 163, 175, 0.2);
+        color: #9ca3af;
+        border-color: #9ca3af;
+      }
+
+      &.rare {
+        background: rgba(59, 130, 246, 0.2);
+        color: #3b82f6;
+        border-color: #3b82f6;
+      }
+
+      &.epic {
+        background: rgba(139, 92, 246, 0.2);
+        color: #8b5cf6;
+        border-color: #8b5cf6;
+      }
+
+      &.legendary {
+        background: linear-gradient(45deg, rgba(245, 158, 11, 0.2), rgba(245, 158, 11, 0.3));
+        color: #f59e0b;
+        border-color: #f59e0b;
+        animation: legendaryGlow 2s ease-in-out infinite alternate;
+      }
+    }
+
+    .xp-chip {
+      background: rgba(74, 222, 128, 0.2);
+      color: $positive-color;
+      border-color: $positive-color;
+    }
+
+    .category-chip {
+      background: rgba(6, 182, 212, 0.2);
+      color: #06b6d4;
+      border-color: #06b6d4;
+    }
+  }
+
+  .achievement-progress {
+    margin-top: 12px;
+
+    .progress-bar {
+      background-color: rgba(255, 255, 255, 0.1);
+      border-radius: 4px;
+      margin-bottom: 4px;
+
+      .MuiLinearProgress-bar {
+        background: linear-gradient(45deg, $positive-color, #06b6d4);
+        border-radius: 4px;
+      }
+
+      &.rare .MuiLinearProgress-bar {
+        background: linear-gradient(45deg, #3b82f6, #06b6d4);
+      }
+
+      &.epic .MuiLinearProgress-bar {
+        background: linear-gradient(45deg, #8b5cf6, #3b82f6);
+      }
+
+      &.legendary .MuiLinearProgress-bar {
+        background: linear-gradient(45deg, #f59e0b, #f97316);
+      }
+    }
+
+    .progress-text {
+      color: rgba($light-text, 0.7);
+      font-weight: 500;
+    }
+  }
+
+  .locked-indicator {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    color: rgba($light-text, 0.5);
+    margin-top: 12px;
+
+    .MuiSvgIcon-root {
+      font-size: 16px;
+    }
+  }
+}
+
+// Overview Tab
+.overview-tab {
+  .stats-card {
+    background: rgba(255, 255, 255, 0.03) !important;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px !important;
+
+    .stat-item {
+      text-align: center;
+
+      .MuiTypography-h4 {
+        color: $light-text;
+        font-weight: 700;
+        margin-bottom: 4px;
+
+        &.streak-text {
+          color: #ef4444;
+        }
+      }
+
+      .MuiTypography-caption {
+        color: rgba($light-text, 0.7);
+        font-weight: 500;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+      }
+    }
+
+    .MuiLinearProgress-root {
+      background-color: rgba(255, 255, 255, 0.1);
+      border-radius: 4px;
+
+      .MuiLinearProgress-bar {
+        background: linear-gradient(45deg, $positive-color, #06b6d4);
+        border-radius: 4px;
+      }
+    }
+  }
+
+  .recent-achievements,
+  .next-achievements {
+    background: rgba(255, 255, 255, 0.03) !important;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px !important;
+
+    .recent-achievement-item,
+    .next-achievement-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 0;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+
+      &:last-child {
+        border-bottom: none;
+      }
+
+      .MuiTypography-subtitle2 {
+        color: $light-text;
+        font-weight: 600;
+      }
+
+      .MuiTypography-caption {
+        color: rgba($light-text, 0.7);
+      }
+    }
+
+    .next-achievement-item {
+      .achievement-info {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        width: 100%;
+
+        .MuiLinearProgress-root {
+          background-color: rgba(255, 255, 255, 0.1);
+          border-radius: 2px;
+          height: 4px;
+          margin: 4px 0;
+
+          .MuiLinearProgress-bar {
+            background: linear-gradient(45deg, $positive-color, #06b6d4);
+            border-radius: 2px;
+          }
+        }
+      }
+    }
+  }
+}
+
+// Achievement Details Dialog
+.achievement-details-dialog {
+  .MuiDialog-paper {
+    background: rgba(28, 35, 51, 0.98) !important;
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 16px !important;
+    color: $light-text;
+
+    .achievement-details-header {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+
+      .MuiTypography-h6 {
+        color: $light-text;
+        font-weight: 600;
+        margin-bottom: 8px;
+      }
+    }
+
+    .achievement-details-meta {
+      background: rgba(255, 255, 255, 0.03);
+      border-radius: 8px;
+      padding: 16px;
+      margin-top: 16px;
+
+      .MuiTypography-subtitle2 {
+        color: $light-text;
+        font-weight: 600;
+      }
+
+      .progress-section {
+        margin-top: 16px;
+        padding-top: 16px;
+        border-top: 1px solid rgba(255, 255, 255, 0.1);
+
+        .progress-bar {
+          background-color: rgba(255, 255, 255, 0.1);
+          border-radius: 4px;
+          margin: 8px 0 4px;
+
+          .MuiLinearProgress-bar {
+            background: linear-gradient(45deg, $positive-color, #06b6d4);
+            border-radius: 4px;
+          }
+        }
+      }
+    }
+  }
+}
+
+// Achievement Celebration Dialog
+.achievement-celebration-dialog {
+  .MuiDialog-paper {
+    background: rgba(28, 35, 51, 0.98) !important;
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(74, 222, 128, 0.3);
+    border-radius: 16px !important;
+    color: $light-text;
+    text-align: center;
+    overflow: hidden;
+    position: relative;
+
+    &::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: linear-gradient(45deg, rgba(74, 222, 128, 0.1), rgba(6, 182, 212, 0.1));
+      pointer-events: none;
+    }
+
+    .celebration-content {
+      position: relative;
+      z-index: 1;
+      padding: 32px;
+
+      .celebration-icon {
+        margin-bottom: 24px;
+        animation: celebrationBounce 1s ease-in-out;
+
+        .MuiSvgIcon-root {
+          color: $positive-color;
+          filter: drop-shadow(0 0 20px rgba(74, 222, 128, 0.5));
+        }
+      }
+
+      .MuiTypography-h4 {
+        color: $light-text;
+        font-weight: 700;
+        margin-bottom: 32px;
+        text-shadow: 0 0 20px rgba(74, 222, 128, 0.3);
+      }
+
+      .new-achievement-display {
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(74, 222, 128, 0.3);
+        border-radius: 16px;
+        padding: 32px;
+        margin: 24px 0;
+
+        .MuiTypography-h2 {
+          font-size: 4rem;
+          margin-bottom: 16px;
+          animation: iconGlow 2s ease-in-out infinite alternate;
+        }
+
+        .MuiTypography-h5 {
+          color: $light-text;
+          font-weight: 600;
+          margin-bottom: 16px;
+        }
+
+        .MuiTypography-body1 {
+          color: rgba($light-text, 0.8);
+          margin-bottom: 24px;
+        }
+
+        .MuiChip-root {
+          background: linear-gradient(45deg, $positive-color, #06b6d4);
+          color: white;
+          font-weight: 700;
+          font-size: 1rem;
+          padding: 8px 16px;
+          height: auto;
+        }
+      }
+    }
+  }
+}
+
+// Animations
+@keyframes legendaryGlow {
+  from {
+    box-shadow: 0 0 5px rgba(245, 158, 11, 0.3);
+  }
+  to {
+    box-shadow: 0 0 15px rgba(245, 158, 11, 0.6);
+  }
+}
+
+@keyframes celebrationBounce {
+  0%, 20%, 50%, 80%, 100% {
+    transform: translateY(0);
+  }
+  40% {
+    transform: translateY(-20px);
+  }
+  60% {
+    transform: translateY(-10px);
+  }
+}
+
+@keyframes iconGlow {
+  from {
+    text-shadow: 0 0 10px rgba(74, 222, 128, 0.5);
+  }
+  to {
+    text-shadow: 0 0 20px rgba(74, 222, 128, 0.8);
+  }
+}
+
+// Responsive Design
+@media (max-width: 768px) {
+  .achievement-system-dialog {
+    .MuiDialog-paper {
+      margin: 16px;
+      max-height: calc(100vh - 32px);
+    }
+
+    .tab-panel {
+      padding: 16px;
+    }
+
+    .achievement-card {
+      .achievement-header {
+        flex-direction: column;
+        text-align: center;
+        gap: 12px;
+
+        .achievement-icon {
+          align-self: center;
+        }
+      }
+
+      .achievement-meta {
+        justify-content: center;
+      }
+    }
+  }
+
+  .overview-tab {
+    .stats-card {
+      .stat-item {
+        margin-bottom: 16px;
+      }
+    }
+
+    .recent-achievement-item,
+    .next-achievement-item {
+      flex-direction: column;
+      text-align: center;
+      gap: 8px;
+    }
+  }
+
+  .achievement-celebration-dialog {
+    .celebration-content {
+      padding: 24px 16px;
+
+      .new-achievement-display {
+        padding: 24px 16px;
+
+        .MuiTypography-h2 {
+          font-size: 3rem;
+        }
+      }
+    }
+  }
+}
+
+@media (max-width: 480px) {
+  .achievement-card {
+    .achievement-header {
+      .achievement-icon {
+        min-width: 50px;
+        height: 50px;
+      }
+    }
+
+    .achievement-meta {
+      .MuiChip-root {
+        font-size: 0.7rem;
+        height: 24px;
+      }
+    }
+  }
+
+  .achievement-celebration-dialog {
+    .celebration-content {
+      .new-achievement-display {
+        .MuiTypography-h2 {
+          font-size: 2.5rem;
+        }
+
+        .MuiTypography-h5 {
+          font-size: 1.25rem;
+        }
+      }
+    }
+  }
+}

@@ -48,7 +48,8 @@ import {
   NavigateNext as NextIcon,
   NavigateBefore as BackIcon,
   Lightbulb as TipIcon,
-  CheckCircle as CheckIcon
+  CheckCircle as CheckIcon,
+  EmojiEvents as TrophyIcon
 } from '@mui/icons-material';
 
 // Import existing components
@@ -61,6 +62,9 @@ import MarketDataPanel from './MarketDataPanel';
 import RiskDashboard from './RiskDashboard';
 import InteractiveTutorialSystem from './InteractiveTutorialSystem';
 import LearningProgressTracker from './LearningProgressTracker';
+import EnhancedTutorialSystem from './EnhancedTutorialSystem';
+import ContextualHelpSystem from './ContextualHelpSystem';
+import AchievementSystem from './AchievementSystem';
 
 // Import styles
 import './ModernTradingDashboard.scss';
@@ -108,6 +112,7 @@ const ModernTradingDashboard: React.FC = () => {
   const [activeGuide, setActiveGuide] = useState<UserGuide | null>(null);
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
   const [showNotifications, setShowNotifications] = useState(false);
+  const [showAchievements, setShowAchievements] = useState(false);
   const [userProgress, setUserProgress] = useState({
     hasCompletedOnboarding: false,
     hasCreatedFirstTrade: false,
@@ -526,17 +531,32 @@ const ModernTradingDashboard: React.FC = () => {
         return (
           <div className="learning-view">
             <Grid container spacing={3}>
-              <Grid item xs={12} md={8}>
+              <Grid item xs={12}>
                 <Paper elevation={2}>
-                  <EnhancedEducationalPanel 
-                    currentStrategy={null}
-                    selectedSymbol={selectedSymbol}
+                  <EnhancedTutorialSystem 
+                    onTutorialComplete={(tutorialId) => {
+                      addNotification({
+                        type: 'success',
+                        title: 'Tutorial Completed!',
+                        message: `Great job completing the tutorial. You're making excellent progress!`,
+                        action: {
+                          label: 'Continue Learning',
+                          onClick: () => setActiveView('learning')
+                        }
+                      });
+                    }}
+                    onPathComplete={(pathId) => {
+                      addNotification({
+                        type: 'success',
+                        title: 'Learning Path Completed!',
+                        message: `Congratulations! You've completed an entire learning path. You've earned a badge!`,
+                        action: {
+                          label: 'View Progress',
+                          onClick: () => setActiveView('learning')
+                        }
+                      });
+                    }}
                   />
-                </Paper>
-              </Grid>
-              <Grid item xs={12} md={4}>
-                <Paper elevation={2}>
-                  <LearningProgressTracker />
                 </Paper>
               </Grid>
             </Grid>
@@ -628,6 +648,18 @@ const ModernTradingDashboard: React.FC = () => {
             >
               <Badge badgeContent={notifications.filter(n => !n.read).length} color="error">
                 <NotificationsIcon />
+              </Badge>
+            </IconButton>
+          </Tooltip>
+
+          {/* Achievements */}
+          <Tooltip title="Achievements">
+            <IconButton
+              color="inherit"
+              onClick={() => setShowAchievements(true)}
+            >
+              <Badge badgeContent={learning.achievements?.length || 0} color="secondary">
+                <TrophyIcon />
               </Badge>
             </IconButton>
           </Tooltip>
@@ -918,6 +950,22 @@ const ModernTradingDashboard: React.FC = () => {
           ))}
         </Box>
       </Paper>
+
+      {/* Achievement System */}
+      <AchievementSystem
+        open={showAchievements}
+        onClose={() => setShowAchievements(false)}
+      />
+
+      {/* Contextual Help System */}
+      <ContextualHelpSystem 
+        enabled={true}
+        showFloatingHelp={true}
+        onHelpRequest={(topic) => {
+          console.log(`Help requested for: ${topic}`);
+          // Track help usage analytics
+        }}
+      />
     </div>
   );
 };

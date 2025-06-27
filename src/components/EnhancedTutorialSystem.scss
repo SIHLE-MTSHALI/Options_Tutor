@@ -1,0 +1,638 @@
+@use '../styles/variables' as *;
+
+.enhanced-tutorial-system {
+  background: $panel-bg;
+  border-radius: 16px;
+  padding: 24px;
+  margin: 16px 0;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  min-height: 600px;
+  color: $light-text;
+
+  &.compact {
+    padding: 16px;
+    min-height: 400px;
+  }
+
+  // View Headers
+  .view-header {
+    margin-bottom: 32px;
+    text-align: center;
+
+    h4 {
+      color: $light-text;
+      font-weight: 700;
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .MuiTypography-body1 {
+      color: rgba($light-text, 0.8);
+      max-width: 600px;
+      margin: 0 auto;
+    }
+  }
+
+  // Learning Paths View
+  .learning-paths-view {
+    .learning-path-card {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 12px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      position: relative;
+      overflow: hidden;
+      height: 100%;
+
+      &:hover:not(.locked) {
+        border-color: $positive-color;
+        background: rgba(74, 222, 128, 0.05);
+        transform: translateY(-4px);
+        box-shadow: 0 12px 40px rgba(0, 0, 0, 0.2);
+      }
+
+      &.locked {
+        opacity: 0.6;
+        cursor: not-allowed;
+        
+        .locked-overlay {
+          position: absolute;
+          top: 0;
+          left: 0;
+          right: 0;
+          bottom: 0;
+          background: rgba(0, 0, 0, 0.7);
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          color: $warning-color;
+          font-weight: 600;
+          z-index: 2;
+
+          .MuiSvgIcon-root {
+            font-size: 2rem;
+            margin-bottom: 8px;
+          }
+        }
+      }
+
+      .path-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 16px;
+
+        h6 {
+          color: $light-text;
+          font-weight: 600;
+          margin: 0;
+        }
+      }
+
+      .path-stats {
+        display: flex;
+        gap: 16px;
+        margin: 16px 0;
+
+        .stat {
+          display: flex;
+          align-items: center;
+          gap: 4px;
+          color: rgba($light-text, 0.7);
+
+          .MuiSvgIcon-root {
+            font-size: 1rem;
+          }
+
+          .MuiTypography-caption {
+            font-size: 0.75rem;
+          }
+        }
+      }
+
+      .badge-earned {
+        background: linear-gradient(45deg, $positive-color, #06b6d4);
+        color: white;
+        padding: 8px 12px;
+        border-radius: 8px;
+        text-align: center;
+        margin-top: 16px;
+        font-weight: 600;
+        animation: glow 2s ease-in-out infinite alternate;
+      }
+    }
+  }
+
+  // Tutorials List View
+  .tutorials-list-view {
+    .tutorial-card {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 12px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      position: relative;
+      overflow: hidden;
+      height: 100%;
+
+      &:hover:not(.locked) {
+        border-color: $positive-color;
+        background: rgba(74, 222, 128, 0.05);
+        transform: translateY(-4px);
+        box-shadow: 0 12px 40px rgba(0, 0, 0, 0.2);
+      }
+
+      &.locked {
+        opacity: 0.6;
+        cursor: not-allowed;
+        
+        .locked-overlay {
+          position: absolute;
+          top: 0;
+          left: 0;
+          right: 0;
+          bottom: 0;
+          background: rgba(0, 0, 0, 0.7);
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          color: $warning-color;
+          font-weight: 600;
+          z-index: 2;
+
+          .MuiSvgIcon-root {
+            font-size: 2rem;
+            margin-bottom: 8px;
+          }
+        }
+      }
+
+      &.completed {
+        border-color: $positive-color;
+        background: rgba(74, 222, 128, 0.1);
+
+        .completed-badge {
+          position: absolute;
+          top: 16px;
+          right: 16px;
+          z-index: 1;
+        }
+      }
+
+      .tutorial-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 16px;
+
+        h6 {
+          color: $light-text;
+          font-weight: 600;
+          margin: 0;
+          flex: 1;
+          margin-right: 16px;
+        }
+      }
+
+      .tutorial-stats {
+        display: flex;
+        gap: 16px;
+        margin: 16px 0;
+
+        .stat {
+          display: flex;
+          align-items: center;
+          gap: 4px;
+          color: rgba($light-text, 0.7);
+
+          .MuiSvgIcon-root {
+            font-size: 1rem;
+          }
+
+          .MuiTypography-caption {
+            font-size: 0.75rem;
+          }
+        }
+      }
+
+      .tutorial-tags {
+        margin-top: 16px;
+
+        .MuiChip-root {
+          background: rgba(255, 255, 255, 0.1);
+          color: rgba($light-text, 0.8);
+          border-color: rgba(255, 255, 255, 0.2);
+        }
+      }
+    }
+  }
+
+  // Tutorial Detail View
+  .tutorial-detail-view {
+    .tutorial-header {
+      margin-bottom: 32px;
+
+      h4 {
+        color: $light-text;
+        font-weight: 700;
+        margin-bottom: 16px;
+      }
+
+      .tutorial-meta {
+        display: flex;
+        gap: 12px;
+        flex-wrap: wrap;
+        margin-top: 16px;
+
+        .MuiChip-root {
+          background: rgba(255, 255, 255, 0.1);
+          color: $light-text;
+        }
+      }
+    }
+
+    .tutorial-steps {
+      .step-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        width: 100%;
+
+        .step-meta {
+          display: flex;
+          gap: 8px;
+        }
+      }
+
+      .MuiStepper-root {
+        background: transparent;
+
+        .MuiStepLabel-root {
+          .MuiStepLabel-label {
+            color: rgba($light-text, 0.7);
+            font-weight: 500;
+
+            &.Mui-active {
+              color: $positive-color;
+              font-weight: 600;
+            }
+
+            &.Mui-completed {
+              color: $positive-color;
+            }
+          }
+        }
+
+        .MuiStepIcon-root {
+          color: rgba(255, 255, 255, 0.3);
+
+          &.Mui-active {
+            color: $positive-color;
+          }
+
+          &.Mui-completed {
+            color: $positive-color;
+          }
+        }
+
+        .MuiStepContent-root {
+          border-left: 1px solid rgba(255, 255, 255, 0.1);
+          margin-left: 12px;
+          padding-left: 24px;
+        }
+      }
+    }
+  }
+
+  // Step Detail View
+  .step-detail-view {
+    .step-header {
+      margin-bottom: 24px;
+
+      h5 {
+        color: $light-text;
+        font-weight: 600;
+        margin-bottom: 16px;
+      }
+
+      .step-progress {
+        .MuiLinearProgress-root {
+          background-color: rgba(255, 255, 255, 0.1);
+          border-radius: 4px;
+
+          .MuiLinearProgress-bar {
+            background: linear-gradient(45deg, $positive-color, #06b6d4);
+          }
+        }
+      }
+    }
+
+    .step-content {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 12px;
+      padding: 24px;
+      margin-bottom: 24px;
+
+      .quiz-section {
+        background: rgba(255, 255, 255, 0.05);
+        border-radius: 8px;
+        padding: 20px;
+        margin-top: 24px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+
+        h6 {
+          color: $light-text;
+          margin-bottom: 16px;
+        }
+
+        .quiz-options {
+          display: flex;
+          gap: 12px;
+          flex-wrap: wrap;
+          margin-bottom: 16px;
+
+          .MuiButton-outlined {
+            border-color: rgba(255, 255, 255, 0.3);
+            color: $light-text;
+
+            &:hover {
+              border-color: $positive-color;
+              background: rgba(74, 222, 128, 0.1);
+            }
+          }
+
+          .MuiButton-contained {
+            background: linear-gradient(45deg, $positive-color, #06b6d4);
+            border: none;
+
+            &:hover {
+              background: linear-gradient(45deg, #22c55e, #0891b2);
+            }
+          }
+        }
+      }
+
+      .hints-section {
+        margin-top: 24px;
+        padding-top: 20px;
+        border-top: 1px solid rgba(255, 255, 255, 0.1);
+      }
+    }
+
+    .step-navigation {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding-top: 24px;
+      border-top: 1px solid rgba(255, 255, 255, 0.1);
+
+      .MuiButton-contained {
+        background: linear-gradient(45deg, $positive-color, #06b6d4);
+        border: none;
+        font-weight: 600;
+        padding: 12px 24px;
+
+        &:hover {
+          background: linear-gradient(45deg, #22c55e, #0891b2);
+        }
+
+        &:disabled {
+          background: rgba(255, 255, 255, 0.1);
+          color: rgba(255, 255, 255, 0.3);
+        }
+      }
+
+      .MuiButton-text {
+        color: rgba($light-text, 0.7);
+
+        &:hover {
+          background: rgba(255, 255, 255, 0.1);
+          color: $light-text;
+        }
+
+        &:disabled {
+          color: rgba(255, 255, 255, 0.3);
+        }
+      }
+    }
+  }
+
+  // Accordion Overrides
+  .MuiAccordion-root {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 8px !important;
+    margin-bottom: 16px;
+
+    &:before {
+      display: none;
+    }
+
+    .MuiAccordionSummary-root {
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 8px 8px 0 0;
+
+      .MuiTypography-root {
+        color: $light-text;
+        font-weight: 600;
+      }
+
+      .MuiSvgIcon-root {
+        color: $light-text;
+      }
+    }
+
+    .MuiAccordionDetails-root {
+      background: transparent;
+      
+      .MuiList-root {
+        .MuiListItem-root {
+          .MuiListItemText-primary {
+            color: $light-text;
+          }
+        }
+      }
+    }
+  }
+
+  // Button Overrides
+  .MuiButton-root {
+    text-transform: none;
+    font-weight: 600;
+    border-radius: 8px;
+
+    &.MuiButton-contained {
+      background: linear-gradient(45deg, $positive-color, #06b6d4);
+      border: none;
+      box-shadow: 0 4px 16px rgba(74, 222, 128, 0.3);
+
+      &:hover {
+        background: linear-gradient(45deg, #22c55e, #0891b2);
+        box-shadow: 0 6px 20px rgba(74, 222, 128, 0.4);
+      }
+    }
+
+    &.MuiButton-outlined {
+      border-color: rgba(255, 255, 255, 0.3);
+      color: $light-text;
+
+      &:hover {
+        border-color: $positive-color;
+        background: rgba(74, 222, 128, 0.1);
+      }
+    }
+
+    &.MuiButton-text {
+      color: rgba($light-text, 0.7);
+
+      &:hover {
+        background: rgba(255, 255, 255, 0.1);
+        color: $light-text;
+      }
+    }
+  }
+
+  // Chip Overrides
+  .MuiChip-root {
+    background: rgba(255, 255, 255, 0.1);
+    color: $light-text;
+    border-color: rgba(255, 255, 255, 0.2);
+
+    &.MuiChip-colorSuccess {
+      background: rgba(74, 222, 128, 0.2);
+      color: $positive-color;
+      border-color: $positive-color;
+    }
+
+    &.MuiChip-colorWarning {
+      background: rgba(251, 191, 36, 0.2);
+      color: $warning-color;
+      border-color: $warning-color;
+    }
+
+    &.MuiChip-colorError {
+      background: rgba(248, 113, 113, 0.2);
+      color: $negative-color;
+      border-color: $negative-color;
+    }
+
+    &.MuiChip-colorPrimary {
+      background: linear-gradient(45deg, $positive-color, #06b6d4);
+      color: white;
+      border: none;
+    }
+  }
+
+  // Alert Overrides
+  .MuiAlert-root {
+    border-radius: 8px;
+    
+    &.MuiAlert-standardSuccess {
+      background: rgba(74, 222, 128, 0.1);
+      border: 1px solid rgba(74, 222, 128, 0.3);
+      color: $positive-color;
+    }
+
+    &.MuiAlert-standardError {
+      background: rgba(248, 113, 113, 0.1);
+      border: 1px solid rgba(248, 113, 113, 0.3);
+      color: $negative-color;
+    }
+
+    &.MuiAlert-standardInfo {
+      background: rgba(6, 182, 212, 0.1);
+      border: 1px solid rgba(6, 182, 212, 0.3);
+      color: #06b6d4;
+    }
+  }
+
+  // Animations
+  @keyframes glow {
+    from {
+      box-shadow: 0 0 10px rgba(74, 222, 128, 0.5);
+    }
+    to {
+      box-shadow: 0 0 20px rgba(74, 222, 128, 0.8);
+    }
+  }
+
+  @keyframes slideInUp {
+    from {
+      transform: translateY(30px);
+      opacity: 0;
+    }
+    to {
+      transform: translateY(0);
+      opacity: 1;
+    }
+  }
+
+  // Responsive Design
+  @media (max-width: 768px) {
+    padding: 16px;
+    margin: 8px 0;
+
+    .view-header {
+      margin-bottom: 24px;
+      text-align: left;
+
+      h4 {
+        font-size: 1.5rem;
+        justify-content: flex-start;
+      }
+    }
+
+    .learning-path-card,
+    .tutorial-card {
+      margin-bottom: 16px;
+    }
+
+    .step-detail-view {
+      .step-content {
+        padding: 16px;
+      }
+
+      .step-navigation {
+        flex-direction: column;
+        gap: 12px;
+
+        .MuiButton-root {
+          width: 100%;
+        }
+      }
+    }
+
+    .tutorial-detail-view {
+      .tutorial-meta {
+        .MuiChip-root {
+          margin-bottom: 8px;
+        }
+      }
+    }
+  }
+
+  @media (max-width: 480px) {
+    .quiz-section {
+      .quiz-options {
+        flex-direction: column;
+
+        .MuiButton-root {
+          width: 100%;
+        }
+      }
+    }
+
+    .path-stats,
+    .tutorial-stats {
+      flex-direction: column;
+      gap: 8px;
+    }
+  }
+}

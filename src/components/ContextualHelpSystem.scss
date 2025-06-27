@@ -1,0 +1,424 @@
+@use '../styles/variables' as *;
+
+.contextual-help-system {
+  position: relative;
+  z-index: 1000;
+
+  // Help indicators on elements
+  .help-indicator {
+    position: absolute !important;
+    top: 2px !important;
+    right: 2px !important;
+    width: 16px !important;
+    height: 16px !important;
+    border-radius: 50% !important;
+    background: linear-gradient(45deg, $positive-color, #06b6d4) !important;
+    color: white !important;
+    font-size: 10px !important;
+    font-weight: 600 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    cursor: pointer !important;
+    z-index: 1001 !important;
+    opacity: 0.7 !important;
+    transition: all 0.2s ease !important;
+    box-shadow: 0 2px 8px rgba(74, 222, 128, 0.3) !important;
+
+    &:hover {
+      opacity: 1 !important;
+      transform: scale(1.1) !important;
+      box-shadow: 0 4px 12px rgba(74, 222, 128, 0.5) !important;
+    }
+
+    &.pulse {
+      animation: helpPulse 2s infinite !important;
+    }
+  }
+
+  // Floating help controls
+  .floating-help-controls {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    z-index: 1200;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+
+    .help-mode-toggle {
+      background: rgba(28, 35, 51, 0.9) !important;
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      color: rgba(255, 255, 255, 0.7) !important;
+      transition: all 0.3s ease !important;
+
+      &:hover {
+        background: rgba(74, 222, 128, 0.1) !important;
+        color: $positive-color !important;
+        border-color: $positive-color;
+      }
+
+      &.active {
+        background: linear-gradient(45deg, $positive-color, #06b6d4) !important;
+        color: white !important;
+        box-shadow: 0 8px 32px rgba(74, 222, 128, 0.3) !important;
+        animation: helpGlow 2s ease-in-out infinite alternate !important;
+      }
+    }
+
+    .MuiFab-secondary {
+      background: rgba(6, 182, 212, 0.9) !important;
+      color: white !important;
+
+      &:hover {
+        background: rgba(6, 182, 212, 1) !important;
+      }
+    }
+  }
+
+  // Help mode indicator
+  .help-mode-indicator {
+    position: fixed;
+    top: 80px;
+    right: 24px;
+    z-index: 1100;
+    animation: slideInRight 0.3s ease-out;
+
+    .MuiPaper-root {
+      background: rgba(28, 35, 51, 0.95) !important;
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(74, 222, 128, 0.3);
+      color: $light-text;
+      padding: 12px 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      border-radius: 8px;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+
+      .MuiTypography-caption {
+        color: $positive-color;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+      }
+
+      .MuiIconButton-root {
+        color: rgba(255, 255, 255, 0.7);
+        padding: 4px;
+
+        &:hover {
+          color: $light-text;
+          background: rgba(255, 255, 255, 0.1);
+        }
+      }
+    }
+  }
+
+  // Tooltip overrides
+  .contextual-help-tooltip {
+    .MuiTooltip-tooltip {
+      background: rgba(28, 35, 51, 0.98) !important;
+      backdrop-filter: blur(20px);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 8px !important;
+      padding: 12px 16px !important;
+      max-width: 300px !important;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3) !important;
+
+      .MuiTypography-subtitle2 {
+        color: $positive-color;
+        font-weight: 600;
+        margin-bottom: 8px;
+      }
+
+      .MuiTypography-body2 {
+        color: $light-text;
+        line-height: 1.5;
+      }
+    }
+
+    .MuiTooltip-arrow {
+      color: rgba(28, 35, 51, 0.98) !important;
+    }
+  }
+
+  // Popover overrides
+  .contextual-help-popover {
+    .MuiPopover-paper {
+      background: rgba(28, 35, 51, 0.98) !important;
+      backdrop-filter: blur(20px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 12px !important;
+      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.3) !important;
+      max-width: 400px;
+    }
+
+    .help-popover-content {
+      background: transparent !important;
+      padding: 20px;
+      box-shadow: none !important;
+
+      .help-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 16px;
+        padding-bottom: 12px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+
+        .MuiTypography-h6 {
+          color: $light-text;
+          font-weight: 600;
+          margin: 0;
+        }
+
+        .MuiIconButton-root {
+          color: rgba(255, 255, 255, 0.7);
+          padding: 4px;
+
+          &:hover {
+            color: $light-text;
+            background: rgba(255, 255, 255, 0.1);
+          }
+        }
+      }
+
+      .MuiTypography-body2 {
+        color: rgba($light-text, 0.9);
+        line-height: 1.6;
+        margin-bottom: 16px;
+      }
+
+      .help-actions {
+        display: flex;
+        gap: 8px;
+        justify-content: flex-end;
+
+        .MuiButton-root {
+          text-transform: none;
+          font-weight: 500;
+          border-radius: 6px;
+          color: rgba($light-text, 0.8);
+
+          &:hover {
+            background: rgba(255, 255, 255, 0.1);
+            color: $light-text;
+          }
+
+          .MuiSvgIcon-root {
+            font-size: 16px;
+          }
+        }
+      }
+    }
+  }
+
+  // Dialog overrides
+  .contextual-help-dialog {
+    .MuiDialog-paper {
+      background: rgba(28, 35, 51, 0.98) !important;
+      backdrop-filter: blur(20px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 16px !important;
+      color: $light-text;
+
+      .MuiDialogTitle-root {
+        background: rgba(255, 255, 255, 0.05);
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+
+        .MuiTypography-h6 {
+          color: $light-text;
+          font-weight: 600;
+          display: flex;
+          align-items: center;
+        }
+
+        .MuiIconButton-root {
+          color: rgba(255, 255, 255, 0.7);
+
+          &:hover {
+            color: $light-text;
+            background: rgba(255, 255, 255, 0.1);
+          }
+        }
+      }
+
+      .MuiDialogContent-root {
+        .MuiTypography-body2 {
+          color: rgba($light-text, 0.8);
+        }
+
+        .MuiList-root {
+          .MuiListItem-root {
+            border-radius: 8px;
+            margin-bottom: 4px;
+            transition: all 0.2s ease;
+
+            &:hover {
+              background: rgba(255, 255, 255, 0.05);
+            }
+
+            &.discovered {
+              background: rgba(74, 222, 128, 0.1);
+              border: 1px solid rgba(74, 222, 128, 0.3);
+            }
+
+            &.undiscovered {
+              opacity: 0.7;
+            }
+
+            .MuiListItemIcon-root {
+              color: $positive-color;
+              min-width: 40px;
+            }
+
+            .MuiListItemText-primary {
+              color: $light-text;
+              font-weight: 500;
+            }
+
+            .MuiListItemText-secondary {
+              color: rgba($light-text, 0.7);
+            }
+
+            .MuiChip-root {
+              background: linear-gradient(45deg, $positive-color, #06b6d4);
+              color: white;
+              font-size: 0.75rem;
+            }
+          }
+        }
+      }
+
+      .MuiDialogActions-root {
+        background: rgba(255, 255, 255, 0.05);
+        border-top: 1px solid rgba(255, 255, 255, 0.1);
+        padding: 16px 24px;
+
+        .MuiButton-root {
+          text-transform: none;
+          font-weight: 600;
+          border-radius: 8px;
+
+          &.MuiButton-contained {
+            background: linear-gradient(45deg, $positive-color, #06b6d4);
+            border: none;
+            box-shadow: 0 4px 16px rgba(74, 222, 128, 0.3);
+
+            &:hover {
+              background: linear-gradient(45deg, #22c55e, #0891b2);
+              box-shadow: 0 6px 20px rgba(74, 222, 128, 0.4);
+            }
+          }
+
+          &.MuiButton-text {
+            color: rgba($light-text, 0.8);
+
+            &:hover {
+              background: rgba(255, 255, 255, 0.1);
+              color: $light-text;
+            }
+          }
+        }
+      }
+    }
+  }
+
+  // Animations
+  @keyframes helpPulse {
+    0% {
+      box-shadow: 0 2px 8px rgba(74, 222, 128, 0.3);
+    }
+    50% {
+      box-shadow: 0 4px 16px rgba(74, 222, 128, 0.6);
+      transform: scale(1.05);
+    }
+    100% {
+      box-shadow: 0 2px 8px rgba(74, 222, 128, 0.3);
+    }
+  }
+
+  @keyframes helpGlow {
+    from {
+      box-shadow: 0 8px 32px rgba(74, 222, 128, 0.3);
+    }
+    to {
+      box-shadow: 0 12px 40px rgba(74, 222, 128, 0.5);
+    }
+  }
+
+  @keyframes slideInRight {
+    from {
+      transform: translateX(100%);
+      opacity: 0;
+    }
+    to {
+      transform: translateX(0);
+      opacity: 1;
+    }
+  }
+
+  // Responsive design
+  @media (max-width: 768px) {
+    .floating-help-controls {
+      bottom: 16px;
+      right: 16px;
+    }
+
+    .help-mode-indicator {
+      top: 70px;
+      right: 16px;
+      left: 16px;
+
+      .MuiPaper-root {
+        padding: 8px 12px;
+
+        .MuiTypography-caption {
+          font-size: 0.7rem;
+        }
+      }
+    }
+
+    .contextual-help-popover {
+      .help-popover-content {
+        padding: 16px;
+        max-width: calc(100vw - 32px);
+      }
+    }
+
+    .contextual-help-dialog {
+      .MuiDialog-paper {
+        margin: 16px;
+        max-height: calc(100vh - 32px);
+      }
+    }
+  }
+
+  @media (max-width: 480px) {
+    .help-indicator {
+      width: 14px !important;
+      height: 14px !important;
+      font-size: 8px !important;
+    }
+
+    .floating-help-controls {
+      .MuiFab-root {
+        width: 48px;
+        height: 48px;
+
+        .MuiSvgIcon-root {
+          font-size: 20px;
+        }
+      }
+    }
+
+    .contextual-help-tooltip {
+      .MuiTooltip-tooltip {
+        max-width: calc(100vw - 32px) !important;
+        padding: 8px 12px !important;
+      }
+    }
+  }
+}
